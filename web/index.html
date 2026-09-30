@@ -3,22 +3,23 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>小薇直播纯净版 - 直播源智能清洗与管理系统</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <title>小薇直播纯净版 - MVP 流程交互原型演示</title>
   <style>
     :root {
-      --bg-primary: #0f141c;
-      --bg-secondary: #18202c;
-      --bg-card: #202b3b;
-      --bg-card-hover: #29374c;
-      --accent: #3b82f6;
-      --accent-glow: rgba(59, 130, 246, 0.35);
+      --bg-dark: #090d16;
+      --bg-card: #131b29;
+      --bg-card-hover: #1c273a;
+      --bg-inner: #0b111c;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --primary-light: #3b82f6;
+      --accent: #06b6d4;
       --success: #10b981;
       --warning: #f59e0b;
       --danger: #ef4444;
-      --text-main: #f1f5f9;
+      --text-main: #f8fafc;
       --text-muted: #94a3b8;
-      --border-color: rgba(255, 255, 255, 0.08);
+      --border: rgba(255, 255, 255, 0.08);
       --radius: 12px;
     }
 
@@ -30,24 +31,26 @@
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
-      background: radial-gradient(circle at top left, #1e293b, var(--bg-primary) 60%);
+      background: radial-gradient(circle at 15% 15%, #172554 0%, var(--bg-dark) 55%);
       color: var(--text-main);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
+      overflow-x: hidden;
     }
 
+    /* 顶部导航 */
     header {
-      background: rgba(24, 32, 44, 0.85);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--border-color);
-      padding: 1rem 2rem;
+      background: rgba(19, 27, 41, 0.85);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      padding: 0.9rem 2rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
       position: sticky;
       top: 0;
-      z-index: 50;
+      z-index: 100;
     }
 
     .brand {
@@ -56,37 +59,39 @@
       gap: 12px;
     }
 
-    .brand-icon {
-      width: 36px;
-      height: 36px;
-      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-      border-radius: 8px;
+    .brand-logo {
+      width: 38px;
+      height: 38px;
+      background: linear-gradient(135deg, #2563eb, #06b6d4);
+      border-radius: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-weight: bold;
-      font-size: 1.2rem;
-      box-shadow: 0 0 16px var(--accent-glow);
+      font-size: 1.3rem;
+      box-shadow: 0 0 20px rgba(37, 99, 235, 0.4);
     }
 
     .brand h1 {
-      font-size: 1.25rem;
+      font-size: 1.15rem;
       font-weight: 700;
-      letter-spacing: -0.02em;
-    }
-
-    .badge-clean {
-      font-size: 0.75rem;
-      background: rgba(16, 185, 129, 0.18);
-      color: #34d399;
-      padding: 3px 8px;
-      border-radius: 9999px;
-      border: 1px solid rgba(16, 185, 129, 0.3);
-      margin-left: 8px;
-    }
-
-    .header-actions {
       display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .badge-mvp {
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      color: #34d399;
+      font-size: 0.72rem;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-weight: 600;
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
       gap: 12px;
     }
 
@@ -100,69 +105,139 @@
       font-weight: 600;
       cursor: pointer;
       border: none;
-      transition: all 0.2s ease;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       text-decoration: none;
     }
 
     .btn-primary {
       background: linear-gradient(135deg, #2563eb, #3b82f6);
       color: white;
-      box-shadow: 0 4px 12px var(--accent-glow);
+      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
     }
 
     .btn-primary:hover {
       background: linear-gradient(135deg, #1d4ed8, #2563eb);
       transform: translateY(-1px);
+      box-shadow: 0 6px 18px rgba(37, 99, 235, 0.5);
     }
 
     .btn-secondary {
       background: var(--bg-card);
       color: var(--text-main);
-      border: 1px solid var(--border-color);
+      border: 1px solid var(--border);
     }
 
     .btn-secondary:hover {
       background: var(--bg-card-hover);
+      border-color: rgba(255, 255, 255, 0.15);
     }
 
+    .btn-success {
+      background: #10b981;
+      color: white;
+    }
+
+    /* 流程步骤指示器 (Stepper) */
+    .stepper-bar {
+      background: rgba(19, 27, 41, 0.5);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 2rem;
+      display: flex;
+      justify-content: center;
+    }
+
+    .stepper-list {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+      max-width: 1000px;
+      width: 100%;
+      justify-content: space-between;
+    }
+
+    .step-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      opacity: 0.6;
+      transition: all 0.2s;
+    }
+
+    .step-item.active {
+      opacity: 1;
+    }
+
+    .step-num {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+
+    .step-item.active .step-num {
+      background: var(--primary);
+      border-color: var(--primary-light);
+      box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+    }
+
+    .step-title {
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+
+    .step-divider {
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* 布局容器 */
     main {
       flex: 1;
-      padding: 2rem;
       max-width: 1560px;
       width: 100%;
       margin: 0 auto;
+      padding: 1.8rem;
       display: grid;
-      grid-template-columns: 420px 1fr 380px;
+      grid-template-columns: 1fr 480px;
       gap: 24px;
     }
 
-    @media (max-width: 1280px) {
+    @media (max-width: 1200px) {
       main {
         grid-template-columns: 1fr;
       }
     }
 
-    .panel {
-      background: rgba(24, 32, 44, 0.65);
-      backdrop-filter: blur(16px);
-      border: 1px solid var(--border-color);
+    /* 主面板卡片 */
+    .card-panel {
+      background: rgba(19, 27, 41, 0.7);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
       border-radius: var(--radius);
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
     }
 
-    .panel-header {
+    .card-header {
       padding: 16px 20px;
-      background: rgba(32, 43, 59, 0.4);
-      border-bottom: 1px solid var(--border-color);
+      background: rgba(28, 39, 58, 0.4);
+      border-bottom: 1px solid var(--border);
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
 
-    .panel-header h2 {
+    .card-header h2 {
       font-size: 1rem;
       font-weight: 600;
       display: flex;
@@ -170,619 +245,1182 @@
       gap: 8px;
     }
 
-    .panel-body {
+    .card-body {
       padding: 20px;
       flex: 1;
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 20px;
       overflow-y: auto;
     }
 
-    /* TV 模拟播放器卡片 */
-    .tv-screen {
-      width: 100%;
-      aspect-ratio: 16 / 9;
-      background: #000;
-      border-radius: 8px;
-      overflow: hidden;
-      position: relative;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border: 2px solid #2d3b4f;
-      box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.8), 0 8px 24px rgba(0, 0, 0, 0.4);
+    /* 流程内容区块 */
+    .flow-section {
+      display: none;
     }
 
-    .tv-content {
-      text-align: center;
-      color: #94a3b8;
+    .flow-section.active {
+      display: block;
+      animation: fadeIn 0.25s ease-out;
     }
 
-    .tv-channel-name {
-      font-size: 1.8rem;
-      font-weight: 700;
-      color: #fff;
-      text-shadow: 0 2px 10px rgba(0,0,0,0.8);
-      margin-bottom: 6px;
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
-    .tv-overlay-info {
-      position: absolute;
-      top: 12px;
-      left: 14px;
-      background: rgba(0, 0, 0, 0.65);
-      padding: 4px 10px;
-      border-radius: 4px;
-      font-size: 0.8rem;
-      font-family: monospace;
-      color: #38bdf8;
-      border-left: 3px solid #38bdf8;
-    }
-
-    .tv-epg-bar {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
-      padding: 16px 14px 10px;
-      font-size: 0.85rem;
-    }
-
-    .tv-channel-list {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      max-height: 240px;
-      overflow-y: auto;
-    }
-
-    .channel-item-tv {
-      padding: 10px 14px;
-      background: var(--bg-card);
-      border-radius: 8px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      cursor: pointer;
-      border: 1px solid transparent;
-      transition: all 0.15s;
-    }
-
-    .channel-item-tv:hover, .channel-item-tv.active {
-      background: var(--bg-card-hover);
-      border-color: var(--accent);
-      transform: translateX(4px);
-    }
-
-    .channel-tag {
-      font-size: 0.75rem;
-      padding: 2px 6px;
-      border-radius: 4px;
-      background: rgba(59, 130, 246, 0.2);
-      color: #60a5fa;
-    }
-
-    /* 中间：管线处理交互 */
-    .pipeline-steps {
+    /* 选项组与开关 */
+    .grid-sources {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 10px;
-      margin-bottom: 16px;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+      margin-bottom: 14px;
     }
 
-    .step-indicator {
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
+    .source-box {
+      background: var(--bg-inner);
+      border: 1px solid var(--border);
       border-radius: 8px;
-      padding: 10px;
-      text-align: center;
-      font-size: 0.8rem;
+      padding: 12px 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
       transition: all 0.2s;
     }
 
-    .step-indicator.active {
-      border-color: var(--accent);
-      background: rgba(37, 99, 235, 0.15);
-      color: #60a5fa;
-      font-weight: 600;
+    .source-box:hover {
+      border-color: rgba(59, 130, 246, 0.4);
     }
 
+    .source-box.checked {
+      border-color: var(--primary);
+      background: rgba(37, 99, 235, 0.12);
+    }
+
+    .rules-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 12px;
+    }
+
+    .rule-card {
+      background: var(--bg-inner);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .rule-card input[type="checkbox"] {
+      margin-top: 3px;
+      accent-color: var(--primary);
+      width: 16px;
+      height: 16px;
+    }
+
+    .rule-info strong {
+      font-size: 0.85rem;
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    .rule-info span {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      line-height: 1.3;
+      display: block;
+    }
+
+    /* 文本输入框 */
     .raw-textarea {
       width: 100%;
-      height: 180px;
-      background: #111827;
-      border: 1px solid var(--border-color);
+      height: 160px;
+      background: #0b1019;
+      border: 1px solid var(--border);
       border-radius: 8px;
       color: #e2e8f0;
-      font-family: monospace;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
       font-size: 0.82rem;
       padding: 12px;
       resize: vertical;
       line-height: 1.4;
+      margin-top: 8px;
     }
 
     .raw-textarea:focus {
       outline: none;
-      border-color: var(--accent);
-      box-shadow: 0 0 10px var(--accent-glow);
+      border-color: var(--primary-light);
+      box-shadow: 0 0 12px rgba(59, 130, 246, 0.25);
     }
 
-    .filter-stats {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
+    /* 运行模拟器进度展示 */
+    .progress-box {
+      background: var(--bg-inner);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
       gap: 12px;
     }
 
-    .stat-card {
-      background: var(--bg-card);
-      padding: 12px;
-      border-radius: 8px;
-      text-align: center;
-      border: 1px solid var(--border-color);
+    .progress-bar-bg {
+      height: 8px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 4px;
+      overflow: hidden;
     }
 
-    .stat-num {
-      font-size: 1.5rem;
+    .progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #2563eb, #06b6d4);
+      transition: width 0.3s ease;
+    }
+
+    .term-log {
+      background: #070a10;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 6px;
+      padding: 12px;
+      font-family: monospace;
+      font-size: 0.8rem;
+      color: #38bdf8;
+      height: 140px;
+      overflow-y: auto;
+      line-height: 1.5;
+    }
+
+    /* 清洗前后对比漏斗统计 */
+    .funnel-stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    .stat-badge {
+      background: var(--bg-inner);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      text-align: center;
+    }
+
+    .stat-val {
+      font-size: 1.6rem;
       font-weight: 700;
       color: #fff;
     }
 
-    .stat-label {
+    .stat-desc {
       font-size: 0.75rem;
       color: var(--text-muted);
       margin-top: 4px;
     }
 
-    .channels-table {
+    /* 频道成果列表表格 */
+    .channel-table-wrapper {
+      max-height: 380px;
+      overflow-y: auto;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+
+    .channel-table {
       width: 100%;
       border-collapse: collapse;
       font-size: 0.85rem;
-    }
-
-    .channels-table th, .channels-table td {
-      padding: 10px 12px;
       text-align: left;
-      border-bottom: 1px solid var(--border-color);
     }
 
-    .channels-table th {
+    .channel-table th {
+      background: #111723;
+      padding: 10px 14px;
       color: var(--text-muted);
-      font-weight: 500;
-      background: rgba(15, 23, 42, 0.4);
+      font-weight: 600;
+      position: sticky;
+      top: 0;
+      z-index: 10;
     }
 
-    .latency-badge {
-      display: inline-block;
-      padding: 2px 8px;
+    .channel-table td {
+      padding: 10px 14px;
+      border-top: 1px solid var(--border);
+    }
+
+    .badge-group {
+      padding: 2px 6px;
       border-radius: 4px;
-      font-size: 0.75rem;
+      font-size: 0.72rem;
+      background: rgba(59, 130, 246, 0.15);
+      color: #60a5fa;
+    }
+
+    .badge-latency {
       font-family: monospace;
+      font-size: 0.75rem;
+      padding: 2px 6px;
+      border-radius: 4px;
       font-weight: 600;
     }
 
-    .latency-fast {
-      background: rgba(16, 185, 129, 0.2);
+    .latency-green {
+      background: rgba(16, 185, 129, 0.15);
       color: #34d399;
     }
 
-    .latency-medium {
-      background: rgba(245, 158, 11, 0.2);
+    .latency-orange {
+      background: rgba(245, 158, 11, 0.15);
       color: #fbbf24;
     }
 
-    .filtered-item {
-      color: #94a3b8;
-      text-decoration: line-through;
-    }
-
-    .badge-ad {
-      background: rgba(239, 68, 68, 0.2);
+    .badge-removed {
+      background: rgba(239, 68, 68, 0.15);
       color: #f87171;
+      font-size: 0.72rem;
       padding: 2px 6px;
       border-radius: 4px;
-      font-size: 0.7rem;
     }
 
-    /* 右侧：导出与小薇直播格式 */
-    .export-preview {
-      flex: 1;
-      background: #0b0f17;
-      border: 1px solid var(--border-color);
+    /* 交付与订阅卡片 */
+    .delivery-options {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .delivery-box {
+      background: var(--bg-inner);
+      border: 1px solid var(--border);
       border-radius: 8px;
-      padding: 14px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .sub-url-input {
+      background: #070b12;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 6px;
+      padding: 8px 10px;
       font-family: monospace;
+      font-size: 0.8rem;
+      color: #38bdf8;
+      width: 100%;
+    }
+
+    /* 右侧：电视大屏与实体遥控器仿真 */
+    .tv-container {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .tv-frame {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #000;
+      border-radius: 12px;
+      border: 3px solid #233148;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), inset 0 0 40px rgba(0, 0, 0, 0.9);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* 电视画面动态背景 */
+    .tv-screen-bg {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, #091e3a 0%, #1e1b4b 50%, #064e3b 100%);
+      opacity: 0.9;
+      transition: background 0.5s ease;
+    }
+
+    /* 电视扫描线效果 */
+    .tv-scanlines {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+      background-size: 100% 4px;
+      pointer-events: none;
+      opacity: 0.4;
+    }
+
+    /* 小薇直播经典 OSD 台标信息 */
+    .tv-osd-top {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 0.78rem;
+      font-family: monospace;
+      color: #38bdf8;
+      border-left: 3px solid #38bdf8;
+      backdrop-filter: blur(4px);
+      z-index: 5;
+    }
+
+    .tv-live-badge {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      background: rgba(239, 68, 68, 0.8);
+      color: white;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 3px;
+      letter-spacing: 1px;
+      z-index: 5;
+    }
+
+    .tv-content-center {
+      position: relative;
+      z-index: 5;
+      text-align: center;
+    }
+
+    .tv-ch-number {
+      font-size: 0.85rem;
+      color: #94a3b8;
+      font-weight: 600;
+      letter-spacing: 1px;
+    }
+
+    .tv-ch-title {
+      font-size: 2rem;
+      font-weight: 800;
+      color: #ffffff;
+      text-shadow: 0 2px 14px rgba(0, 0, 0, 0.9);
+      margin: 4px 0;
+    }
+
+    .tv-ch-meta {
       font-size: 0.82rem;
       color: #38bdf8;
-      white-space: pre-wrap;
-      overflow-y: auto;
-      max-height: 520px;
-      line-height: 1.5;
+      background: rgba(15, 23, 42, 0.6);
+      padding: 2px 8px;
+      border-radius: 12px;
+      display: inline-block;
     }
 
-    .tip-box {
-      background: rgba(59, 130, 246, 0.1);
-      border-left: 3px solid #3b82f6;
-      padding: 12px;
+    /* 底部 EPG 节目单 */
+    .tv-epg-banner {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(to top, rgba(0, 0, 0, 0.95), transparent);
+      padding: 20px 14px 10px;
+      font-size: 0.82rem;
+      z-index: 5;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+
+    .tv-epg-title {
+      color: #e2e8f0;
+      font-weight: 600;
+    }
+
+    .tv-epg-next {
+      color: #64748b;
+      font-size: 0.75rem;
+    }
+
+    /* 遥控器外观 */
+    .remote-pad {
+      background: #111723;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    }
+
+    .remote-header {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+    }
+
+    /* 方向键圆盘 */
+    .d-pad {
+      width: 150px;
+      height: 150px;
+      background: #1e293b;
+      border-radius: 50%;
+      position: relative;
+      box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.6), 0 4px 12px rgba(0, 0, 0, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .d-btn {
+      position: absolute;
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      transition: color 0.15s;
+    }
+
+    .d-btn:hover {
+      color: #fff;
+    }
+
+    .d-btn:active {
+      transform: scale(0.92);
+    }
+
+    .d-up { top: 8px; width: 100%; height: 36px; }
+    .d-down { bottom: 8px; width: 100%; height: 36px; }
+    .d-left { left: 8px; height: 100%; width: 36px; }
+    .d-right { right: 8px; height: 100%; width: 36px; }
+
+    .d-center {
+      width: 54px;
+      height: 54px;
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      border-radius: 50%;
+      border: none;
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+      transition: all 0.15s;
+    }
+
+    .d-center:active {
+      transform: scale(0.9);
+      background: #1d4ed8;
+    }
+
+    .remote-helper {
+      font-size: 0.72rem;
+      color: #64748b;
+      text-align: center;
+      line-height: 1.4;
+    }
+
+    /* 浮动评价提示 */
+    .demo-notice {
+      background: rgba(37, 99, 235, 0.1);
+      border-left: 3px solid var(--primary);
+      padding: 10px 14px;
       border-radius: 0 8px 8px 0;
       font-size: 0.8rem;
-      color: #93c5fd;
-      line-height: 1.4;
+      color: #bfdbfe;
     }
 
     footer {
       text-align: center;
-      padding: 1.5rem;
-      font-size: 0.85rem;
+      padding: 1.2rem;
+      font-size: 0.82rem;
       color: var(--text-muted);
-      border-top: 1px solid var(--border-color);
-      background: rgba(15, 20, 28, 0.8);
+      border-top: 1px solid var(--border);
+      background: rgba(11, 16, 26, 0.7);
     }
   </style>
 </head>
 <body>
 
+  <!-- 顶部导航栏 -->
   <header>
     <div class="brand">
-      <div class="brand-icon">📺</div>
+      <div class="brand-logo">📺</div>
       <div>
-        <h1>小薇直播纯净版 <span class="badge-clean">智能源管理演示</span></h1>
+        <h1>小薇直播纯净版 <span class="badge-mvp">MVP 业务流程交互原型</span></h1>
       </div>
     </div>
-    <div class="header-actions">
-      <button class="btn btn-secondary" onclick="resetToSample()">载入示例直播源</button>
-      <button class="btn btn-primary" id="runBtn" onclick="runPipeline()">⚡ 一键清洗与测速优选</button>
+    <div class="nav-actions">
+      <button class="btn btn-secondary" onclick="loadSampleSource()">📥 载入典型脏源样例</button>
+      <button class="btn btn-primary" id="btnRunWorkflow" onclick="startWorkflowSim()">⚡ 启动全流程模拟</button>
     </div>
   </header>
 
+  <!-- 核心业务步骤导航条 (Stepper) -->
+  <nav class="stepper-bar">
+    <div class="stepper-list">
+      <div class="step-item active" id="stepTab1" onclick="switchStep(1)">
+        <div class="step-num">1</div>
+        <div class="step-title">数据源与清洗规则</div>
+      </div>
+      <div class="step-divider"></div>
+      <div class="step-item" id="stepTab2" onclick="switchStep(2)">
+        <div class="step-num">2</div>
+        <div class="step-title">探活测速与淘汰</div>
+      </div>
+      <div class="step-divider"></div>
+      <div class="step-item" id="stepTab3" onclick="switchStep(3)">
+        <div class="step-num">3</div>
+        <div class="step-title">清洗成果看板</div>
+      </div>
+      <div class="step-divider"></div>
+      <div class="step-item" id="stepTab4" onclick="switchStep(4)">
+        <div class="step-num">4</div>
+        <div class="step-title">电视交付与订阅</div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- 主体工作区 -->
   <main>
-    <!-- 左侧：电视端模拟体验 -->
-    <section class="panel">
-      <div class="panel-header">
-        <h2>📺 小薇直播电视端模拟体验</h2>
-        <span class="channel-tag">TV 纯净版 遥控交互</span>
-      </div>
-      <div class="panel-body">
-        <div class="tv-screen">
-          <div class="tv-overlay-info" id="tvStatus">● 正在直播 1080P 50FPS</div>
-          <div class="tv-content">
-            <div class="tv-channel-name" id="currentChName">CCTV-1</div>
-            <p id="currentChInfo" style="font-size:0.85rem; color:#38bdf8;">当前线路 1 • 响应延迟 12.8ms</p>
-          </div>
-          <div class="tv-epg-bar">
-            <strong>正在播出:</strong> <span id="currentEpg">新闻联播 (重播)</span>
-          </div>
-        </div>
-
-        <div style="font-size: 0.85rem; color: var(--text-muted); display:flex; justify-content:space-between;">
-          <span>模拟频道列表 (点击切台)</span>
-          <span>遥控器上下换台</span>
-        </div>
-
-        <div class="tv-channel-list" id="tvListContainer">
-          <!-- 动态渲染频道列表 -->
-        </div>
-
-        <div class="tip-box">
-          💡 <strong>纯净版特点</strong>：已去除开屏广告、去换台贴片、过滤所有购物台。支持遥控器左右键快速切换最优线路！
-        </div>
-      </div>
-    </section>
-
-    <!-- 中间：全流程实时处理与清洗对比 -->
-    <section class="panel">
-      <div class="panel-header">
-        <h2>⚙️ 直播源处理管线 (Pipeline)</h2>
-        <span style="font-size:0.8rem; color:var(--text-muted);">自动过滤 • 频道归一 • 测速排序</span>
-      </div>
-      <div class="panel-body">
-        <div class="pipeline-steps">
-          <div class="step-indicator active">1. 原始聚合</div>
-          <div class="step-indicator active">2. 广告过滤</div>
-          <div class="step-indicator active">3. 频道归一</div>
-          <div class="step-indicator active">4. 测速优选</div>
+    <!-- 左侧：工作流程与配置卡片 -->
+    <section class="card-panel">
+      <!-- 步骤 1：源与规则配置 -->
+      <div class="card-body flow-section active" id="secStep1">
+        <div class="card-header" style="margin: -20px -20px 16px -20px;">
+          <h2>⚙️ 步骤一：数据源选择与纯净度规则</h2>
+          <span style="font-size:0.78rem; color:var(--text-muted);">解决核心痛点：源乱、广告台多</span>
         </div>
 
         <div>
-          <label style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 6px; display:block;">
-            原始直播源输入 (支持 M3U 或 TXT 格式，混合包含广告与杂乱清晰度标签):
+          <label style="font-size: 0.85rem; font-weight:600; margin-bottom: 8px; display:block;">
+            1. 选择预设聚合公网源 (支持多选 / 自主合并)：
           </label>
-          <textarea id="rawInput" class="raw-textarea" placeholder="输入 M3U 或 TXT 直播源文本..."></textarea>
+          <div class="grid-sources">
+            <div class="source-box checked" onclick="toggleSource(this)">
+              <div>
+                <strong style="font-size:0.85rem; display:block;">Guovin 优质央视卫视源</strong>
+                <span style="font-size:0.72rem; color:var(--text-muted);">包含央视/主流卫视综合源</span>
+              </div>
+              <span style="color:#10b981;">✓</span>
+            </div>
+            <div class="source-box checked" onclick="toggleSource(this)">
+              <div>
+                <strong style="font-size:0.85rem; display:block;">FanMingMing IPv6 极速流</strong>
+                <span style="font-size:0.72rem; color:var(--text-muted);">百兆直连，无转码损耗</span>
+              </div>
+              <span style="color:#10b981;">✓</span>
+            </div>
+            <div class="source-box" onclick="toggleSource(this)">
+              <div>
+                <strong style="font-size:0.85rem; display:block;">YueChan 地方频道合集</strong>
+                <span style="font-size:0.72rem; color:var(--text-muted);">全国各省地市生活综合台</span>
+              </div>
+              <span style="color:#64748b;">+</span>
+            </div>
+          </div>
         </div>
 
-        <div class="filter-stats">
-          <div class="stat-card">
-            <div class="stat-num" id="statTotal">9</div>
-            <div class="stat-label">原始源总数</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-num" id="statAd" style="color:#ef4444;">2</div>
-            <div class="stat-label">剔除广告/购物台</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-num" id="statValid" style="color:#10b981;">5</div>
-            <div class="stat-label">清洗后精选频道</div>
+        <div>
+          <label style="font-size: 0.85rem; font-weight:600; margin-bottom: 8px; display:block;">
+            2. 纯净度清洗与优选规则：
+          </label>
+          <div class="rules-grid">
+            <label class="rule-card">
+              <input type="checkbox" id="ruleAd" checked>
+              <div class="rule-info">
+                <strong>零容忍广告过滤</strong>
+                <span>自动丢弃购物、特惠、商城、广告等非正常频道</span>
+              </div>
+            </label>
+            <label class="rule-card">
+              <input type="checkbox" id="ruleNormalize" checked>
+              <div class="rule-info">
+                <strong>台名归一收敛</strong>
+                <span>去除 1080P/HD 等杂乱后缀，统一合并 CCTV-1~17</span>
+              </div>
+            </label>
+            <label class="rule-card">
+              <input type="checkbox" id="ruleTop" checked>
+              <div class="rule-info">
+                <strong>单台线路精选 Top 2</strong>
+                <span>每个频道严格只保留响应最快的 2 条线路，杜绝冗余</span>
+              </div>
+            </label>
+            <label class="rule-card">
+              <input type="checkbox" id="ruleDropDead" checked>
+              <div class="rule-info">
+                <strong>自动剔除超时死链</strong>
+                <span>探测响应延迟 > 3000ms 或 HTTP 404/500 即刻丢弃</span>
+              </div>
+            </label>
           </div>
         </div>
 
-        <div style="flex: 1; overflow-y: auto;">
-          <table class="channels-table">
+        <div>
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <label style="font-size: 0.85rem; font-weight:600;">原始输入源文本预览 (包含典型杂乱台与广告台)：</label>
+            <span style="font-size:0.75rem; color:#f59e0b;">已载入 14 条带杂音的测试数据</span>
+          </div>
+          <textarea id="rawSourceText" class="raw-textarea"></textarea>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end;">
+          <button class="btn btn-primary" onclick="proceedToStep(2)">下一步：开始测速探活 ➔</button>
+        </div>
+      </div>
+
+      <!-- 步骤 2：探活测速与淘汰 -->
+      <div class="card-body flow-section" id="secStep2">
+        <div class="card-header" style="margin: -20px -20px 16px -20px;">
+          <h2>⚡ 步骤二：自动化清洗测速与淘汰</h2>
+          <span style="font-size:0.78rem; color:var(--text-muted);">秒级高并发探活，保证每一条线路均可秒播</span>
+        </div>
+
+        <div class="progress-box">
+          <div style="display:flex; justify-content:space-between; font-size:0.85rem;">
+            <span id="progressStepTitle">正在抓取并解析源清单...</span>
+            <strong id="progressPercent" style="color:#38bdf8;">0%</strong>
+          </div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" id="progressBar"></div>
+          </div>
+          <div class="term-log" id="termLog">
+            [07:55:01] 准备初始化清洗引擎...
+          </div>
+        </div>
+
+        <div class="demo-notice">
+          💡 <strong>测速原理</strong>：在后台以异步非阻塞并发请求直播源 TS 关键分片，测量 HTTP 握手首包往返延迟 (RTT)。延迟过高或超时断流的直接打入淘汰名单，确保电视遥控切台无黑屏。
+        </div>
+
+        <div style="display:flex; justify-content:space-between; margin-top: auto;">
+          <button class="btn btn-secondary" onclick="proceedToStep(1)">⬅ 返回上一步</button>
+          <button class="btn btn-primary" id="btnNextTo3" onclick="proceedToStep(3)" disabled>下一步：查看优选看板 ➔</button>
+        </div>
+      </div>
+
+      <!-- 步骤 3：清洗成果看板 -->
+      <div class="card-body flow-section" id="secStep3">
+        <div class="card-header" style="margin: -20px -20px 16px -20px;">
+          <h2>📊 步骤三：清洗与优选对比看板</h2>
+          <span style="font-size:0.78rem; color:var(--text-muted);">清晰直观的清洗漏斗与收敛结果</span>
+        </div>
+
+        <!-- 漏斗指标 -->
+        <div class="funnel-stats">
+          <div class="stat-badge">
+            <div class="stat-val" id="statRawCount">14</div>
+            <div class="stat-desc">原始条目数</div>
+          </div>
+          <div class="stat-badge">
+            <div class="stat-val" id="statAdRemoved" style="color:var(--danger);">-4</div>
+            <div class="stat-desc">拦截广告/购物台</div>
+          </div>
+          <div class="stat-badge">
+            <div class="stat-val" id="statDeadRemoved" style="color:var(--warning);">-2</div>
+            <div class="stat-desc">淘汰卡顿死链</div>
+          </div>
+          <div class="stat-badge">
+            <div class="stat-val" id="statFinalCount" style="color:var(--success);">8</div>
+            <div class="stat-desc">精选优质可用源</div>
+          </div>
+        </div>
+
+        <!-- 频道列表详情表格 -->
+        <div class="channel-table-wrapper">
+          <table class="channel-table">
             <thead>
               <tr>
-                <th>原始名称</th>
-                <th>标准化名称</th>
+                <th>频道名称</th>
                 <th>分组</th>
-                <th>测速延迟 (RTT)</th>
-                <th>状态</th>
+                <th>优选线路 1 (最快)</th>
+                <th>优选线路 2 (备用)</th>
+                <th>操作</th>
               </tr>
             </thead>
-            <tbody id="resultTableBody">
-              <!-- 动态表格内容 -->
+            <tbody id="channelsResultBody">
+              <!-- JS 动态注入 -->
             </tbody>
           </table>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; margin-top: auto;">
+          <button class="btn btn-secondary" onclick="proceedToStep(2)">⬅ 上一步</button>
+          <button class="btn btn-primary" onclick="proceedToStep(4)">下一步：电视订阅与交付 ➔</button>
+        </div>
+      </div>
+
+      <!-- 步骤 4：电视交付与订阅 -->
+      <div class="card-body flow-section" id="secStep4">
+        <div class="card-header" style="margin: -20px -20px 16px -20px;">
+          <h2>📺 步骤四：电视端订阅与即时生效</h2>
+          <span style="font-size:0.78rem; color:var(--text-muted);">解决电视导源繁琐痛点，一次配置永久保活</span>
+        </div>
+
+        <div class="delivery-options">
+          <!-- 在线订阅链接 -->
+          <div class="delivery-box">
+            <strong style="font-size:0.9rem; color:#fff;">🌐 方式一：固定在线订阅 URL</strong>
+            <p style="font-size:0.78rem; color:var(--text-muted);">
+              在小薇直播【网络自定义】中填入固定订阅直链，后台每天自动更新，电视端永不失效：
+            </p>
+            <input type="text" class="sub-url-input" id="subUrlField" value="http://192.168.1.188:8088/live.txt" readonly>
+            <div style="display:flex; gap:8px;">
+              <button class="btn btn-primary" style="flex:1; justify-content:center;" onclick="copySubUrl()">
+                📋 复制订阅地址
+              </button>
+              <button class="btn btn-secondary" onclick="mockScanQr()">
+                📱 手机扫码推送到电视
+              </button>
+            </div>
+          </div>
+
+          <!-- 离线文件导出 -->
+          <div class="delivery-box">
+            <strong style="font-size:0.9rem; color:#fff;">💾 方式二：离线 U 盘 / 局域网文件</strong>
+            <p style="font-size:0.78rem; color:var(--text-muted);">
+              导出完全符合小薇直播 <code>#genre#</code> 分组规范的纯净 TXT 文件：
+            </p>
+            <div style="display:flex; gap:8px; margin-top:auto;">
+              <button class="btn btn-secondary" style="flex:1; justify-content:center;" onclick="copyTxtContent()">
+                📋 复制纯文本
+              </button>
+              <button class="btn btn-success" style="flex:1; justify-content:center;" onclick="downloadPureTxt()">
+                ⬇ 下载 live_xiaowei.txt
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label style="font-size:0.85rem; font-weight:600; margin-bottom:6px; display:block;">
+            小薇直播格式文件内容预览 (已按央视、卫视规范排序)：
+          </label>
+          <textarea id="exportPreviewArea" class="raw-textarea" style="height: 140px;" readonly></textarea>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; margin-top: auto;">
+          <button class="btn btn-secondary" onclick="proceedToStep(3)">⬅ 上一步</button>
+          <button class="btn btn-primary" onclick="alert('流程体验完成！您可以通过右侧遥控器自由测试电视频道切台与线路切换体验。')">
+            🎉 流程走通确认
+          </button>
         </div>
       </div>
     </section>
 
-    <!-- 右侧：小薇直播专有 TXT 格式导出与下载 -->
-    <section class="panel">
-      <div class="panel-header">
-        <h2>📋 小薇直播专属 TXT 输出</h2>
-        <button class="btn btn-secondary" style="padding:4px 10px; font-size:0.75rem;" onclick="copyOutput()">一键复制</button>
+    <!-- 右侧：电视大屏与遥控器交互体验卡片 -->
+    <section class="card-panel">
+      <div class="card-header">
+        <h2>🖥️ 小薇直播电视端模拟体验</h2>
+        <span class="badge-mvp">遥控器联动</span>
       </div>
-      <div class="panel-body">
-        <p style="font-size: 0.8rem; color: var(--text-muted);">
-          小薇直播标准 <code>#genre#</code> 分组格式，复制后可直接通过局域网网页上传至电视盒子：
-        </p>
-        <pre class="export-preview" id="exportOutput"></pre>
-        <button class="btn btn-primary" style="width: 100%; justify-content: center;" onclick="downloadTxt()">
-          💾 下载 live_xiaowei.txt 文件
-        </button>
+      <div class="card-body">
+        <div class="tv-container">
+          <!-- 电视屏幕 -->
+          <div class="tv-frame" id="tvFrame">
+            <div class="tv-screen-bg" id="tvScreenBg"></div>
+            <div class="tv-scanlines"></div>
+
+            <div class="tv-osd-top" id="tvOsdInfo">
+              1080P 50FPS • 延迟 12ms
+            </div>
+            <div class="tv-live-badge">LIVE 直播</div>
+
+            <div class="tv-content-center">
+              <div class="tv-ch-number" id="tvChNum">01</div>
+              <div class="tv-ch-title" id="tvChTitle">CCTV-1 综合</div>
+              <div class="tv-ch-meta" id="tvLineMeta">最优线路 1 • 极速直连</div>
+            </div>
+
+            <div class="tv-epg-banner">
+              <div>
+                <div class="tv-epg-title" id="tvCurrentProgram">正在播出：新闻联播</div>
+                <div class="tv-epg-next" id="tvNextProgram">稍后播放：焦点访谈 (19:38)</div>
+              </div>
+              <div style="font-size:0.75rem; color:#94a3b8; font-family:monospace;">
+                小薇直播 纯净版
+              </div>
+            </div>
+          </div>
+
+          <!-- 仿真遥控器 -->
+          <div class="remote-pad">
+            <div class="remote-header">
+              <span>XiaoWei Remote</span>
+              <span style="color:#ef4444;">● 电源</span>
+            </div>
+
+            <!-- 方向控制圆盘 -->
+            <div class="d-pad">
+              <button class="d-btn d-up" onclick="remotePrevChannel()" title="上一个频道">▲</button>
+              <button class="d-btn d-down" onclick="remoteNextChannel()" title="下一个频道">▼</button>
+              <button class="d-btn d-left" onclick="remotePrevLine()" title="切换上一线路">◀</button>
+              <button class="d-btn d-right" onclick="remoteNextLine()" title="切换下一线路">▶</button>
+              <button class="d-center" onclick="remoteConfirm()">OK</button>
+            </div>
+
+            <div class="remote-helper">
+              <strong>💡 遥控指引 (亦支持电脑键盘)</strong><br>
+              键盘 <strong>[↑ / ↓]</strong> 切换频道 &nbsp;•&nbsp; 键盘 <strong>[← / →]</strong> 切换线路源
+            </div>
+          </div>
+        </div>
       </div>
     </section>
   </main>
 
   <footer>
-    小薇直播纯净版 • 直播源智能清洗与管理系统 • 严格遵循电视遥控器交互标准与 AGENTS.md 质量规范
+    小薇直播纯净版 • MVP 原型系统 • 支持完整业务流程模拟、去噪测速与电视端无感订阅
   </footer>
 
   <script>
-    const DEFAULT_SAMPLE = `#EXTM3U x-tvg-url="https://live.fanmingming.com/e.xml"
-#EXTINF:-1 tvg-name="CCTV1" tvg-logo="https://live.fanmingming.com/tv/CCTV1.png" group-title="央视频道",CCTV-1 综合 [1080P]
-http://111.20.10.1:8080/live/cctv1_line1.m3u8
-#EXTINF:-1 tvg-name="CCTV1" group-title="央视",CCTV1 高清
-http://111.20.10.2:8080/live/cctv1_line2.m3u8
-#EXTINF:-1 tvg-name="CCTV1" group-title="央视",cctv-1
-http://111.20.10.1:8080/live/cctv1_line1.m3u8
-#EXTINF:-1 group-title="购物频道",天天电视特惠购物
-http://111.20.10.9:8080/live/ad_shopping.m3u8
-#EXTINF:-1 tvg-name="CCTV5+" group-title="央视",cctv 5+ 体育赛事 超清
-http://111.20.10.5:8080/live/cctv5plus.m3u8
-#EXTINF:-1 tvg-name="湖南卫视" group-title="卫视",湖南卫视 HD [4K测试]
-http://222.30.10.1:8080/live/hunan_line1.m3u8
-#EXTINF:-1 tvg-name="湖南卫视" group-title="卫视",湖南卫视 (超清)
-http://222.30.10.2:8080/live/hunan_line2.m3u8
-#EXTINF:-1 tvg-name="浙江卫视" group-title="卫视",浙江卫视 1080P
-http://222.30.10.3:8080/live/zhejiang.m3u8
-#EXTINF:-1 group-title="其他",家庭特惠导购
-http://111.20.10.8:8080/live/shop2.m3u8`;
+    // 典型测试脏源数据 (混合购物广告、杂乱后缀、死链)
+    const SAMPLE_DIRTY_DATA = `央视频道,#genre#
+CCTV-1 综合 [1080P 超清],http://111.20.10.1:8080/live/cctv1_line1.m3u8
+CCTV1 高清,http://111.20.10.2:8080/live/cctv1_line2.m3u8
+cctv-1,http://111.20.10.3:8080/live/cctv1_dead.m3u8
+CCTV 5+ 体育赛事 超清,http://111.20.10.5:8080/live/cctv5plus.m3u8
+CCTV-13 新闻高清,http://111.20.10.13:8080/live/cctv13.m3u8
 
-    function resetToSample() {
-      document.getElementById('rawInput').value = DEFAULT_SAMPLE;
-      runPipeline();
-    }
+卫视频道,#genre#
+湖南卫视 HD [4K测试],http://222.30.10.1:8080/live/hunan_line1.m3u8
+湖南卫视 (超清),http://222.30.10.2:8080/live/hunan_line2.m3u8
+浙江卫视 1080P,http://222.30.10.3:8080/live/zhejiang.m3u8
+东方卫视 高清 [慢速线路],http://222.30.10.4:8080/live/dongfang_dead.m3u8
 
-    // 前端内置的智能清洗与规整逻辑 (与后端 normalizer & exporter 保持一致)
-    function cleanAndProcessSources(rawText) {
-      const lines = rawText.split('\n').map(l => l.trim()).filter(l => l);
-      const items = [];
-      let currentExtinf = "";
-      let currentGenre = "央视频道";
+购物频道,#genre#
+天天特惠电视购物,http://111.20.10.99:8080/live/ad_shop1.m3u8
+家庭名品专享商城,http://111.20.10.98:8080/live/ad_shop2.m3u8
+珠宝翡翠品牌导购,http://111.20.10.97:8080/live/ad_shop3.m3u8
+内部测试专享体验台,http://111.20.10.96:8080/live/ad_test.m3u8`;
 
-      // 广告关键词
-      const adKeywords = ["购物", "特惠", "商城", "导购", "测试", "广告", "专享"];
-      const isAd = (name) => adKeywords.some(kw => name.includes(kw));
-
-      // CCTV 标准化映射
-      const normalizeName = (name) => {
-        let clean = name.replace(/\[.*?\]|\(.*?\)|（.*?）/g, '').trim();
-        clean = clean.replace(/\b(1080[pP]|720[pP]|4[kK]|8[kK]|HD|FHD)\b/gi, '').trim();
-        clean = clean.replace(/(超清|高清|标清|综合|体育赛事|体育|新闻|电影|纪录)/g, '').trim();
-
-        const cctvMatch = name.match(/cctv[-_\s]*(4k|8k|[0-9]{1,2}\+|[0-9]{1,2})/i);
-        if (cctvMatch) {
-          const num = cctvMatch[1].toUpperCase();
-          return `CCTV-\${num}`;
-        }
-        const weishiMatch = name.match(/([\u4e00-\u9fa5]{2,4}卫视)/);
-        if (weishiMatch) return weishiMatch[1];
-        return clean || name;
-      };
-
-      for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
-        if (line.startsWith("#EXTINF")) {
-          currentExtinf = line;
-        } else if (line.startsWith("#genre#") || line.includes(",#genre#")) {
-          currentGenre = line.split(",")[0].trim();
-        } else if (line.startsWith("http://") || line.startsWith("https://")) {
-          let rawName = "未知频道";
-          if (currentExtinf) {
-            const commaIdx = currentExtinf.lastIndexOf(",");
-            if (commaIdx !== -1) rawName = currentExtinf.substring(commaIdx + 1).trim();
-          }
-          const ad = isAd(rawName);
-          const normName = normalizeName(rawName);
-          let group = normName.startsWith("CCTV") ? "央视频道" : (normName.includes("卫视") ? "卫视频道" : "地方频道");
-
-          // 模拟响应延迟 (ms)
-          let latency = Math.floor(10 + Math.random() * 80);
-          if (normName === "CCTV-1" && line.includes("line2")) latency = 12.8;
-          if (normName === "CCTV-1" && line.includes("line1")) latency = 45.2;
-
-          items.push({
-            rawName,
-            normName,
-            url: line,
-            group,
-            isAd: ad,
-            latency
-          });
-          currentExtinf = "";
-        }
+    // 清洗完成后的模拟数据结构
+    const MOCK_CHANNELS = [
+      {
+        num: "01",
+        name: "CCTV-1 综合",
+        group: "央视频道",
+        epg: "正在播出：新闻联播",
+        nextEpg: "稍后播放：焦点访谈 (19:38)",
+        bg: "linear-gradient(135deg, #0f2027, #203a43, #2c5364)",
+        lines: [
+          { name: "线路 1 (IPv6直连)", latency: 12.8, url: "http://111.20.10.2:8080/live/cctv1_line2.m3u8" },
+          { name: "线路 2 (备用联通)", latency: 38.5, url: "http://111.20.10.1:8080/live/cctv1_line1.m3u8" }
+        ]
+      },
+      {
+        num: "02",
+        name: "CCTV-5+ 体育",
+        group: "央视频道",
+        epg: "正在播出：国际男篮锦标赛直播",
+        nextEpg: "稍后播放：天下足球 (21:30)",
+        bg: "linear-gradient(135deg, #1f4037, #99f2c8)",
+        lines: [
+          { name: "线路 1 (超清50FPS)", latency: 22.4, url: "http://111.20.10.5:8080/live/cctv5plus.m3u8" }
+        ]
+      },
+      {
+        num: "03",
+        name: "CCTV-13 新闻",
+        group: "央视频道",
+        epg: "正在播出：共同关注",
+        nextEpg: "稍后播放：东方时空 (20:00)",
+        bg: "linear-gradient(135deg, #141e30, #243b55)",
+        lines: [
+          { name: "线路 1 (官方直播源)", latency: 18.2, url: "http://111.20.10.13:8080/live/cctv13.m3u8" }
+        ]
+      },
+      {
+        num: "04",
+        name: "湖南卫视",
+        group: "卫视频道",
+        epg: "正在播出：快乐大本营精选",
+        nextEpg: "稍后播放：金鹰独播剧场 (20:10)",
+        bg: "linear-gradient(135deg, #e65c00, #f9d423)",
+        lines: [
+          { name: "线路 1 (芒果超清)", latency: 16.5, url: "http://222.30.10.2:8080/live/hunan_line2.m3u8" },
+          { name: "线路 2 (4K直传)", latency: 42.0, url: "http://222.30.10.1:8080/live/hunan_line1.m3u8" }
+        ]
+      },
+      {
+        num: "05",
+        name: "浙江卫视",
+        group: "卫视频道",
+        epg: "正在播出：奔跑吧精选回顾",
+        nextEpg: "稍后播放：中国好声音 (21:10)",
+        bg: "linear-gradient(135deg, #2b5876, #4e4376)",
+        lines: [
+          { name: "线路 1 (蓝莓高清)", latency: 26.0, url: "http://222.30.10.3:8080/live/zhejiang.m3u8" }
+        ]
       }
-      return items;
+    ];
+
+    let currentChannelIdx = 0;
+    let currentLineIdx = 0;
+    let isProcessing = false;
+
+    // 载入测试源
+    function loadSampleSource() {
+      document.getElementById('rawSourceText').value = SAMPLE_DIRTY_DATA;
     }
 
-    let globalGrouped = {};
-    let globalTxt = "";
+    // 勾选源卡片
+    function toggleSource(el) {
+      el.classList.toggle('checked');
+      const mark = el.querySelector('span:last-child');
+      if (el.classList.contains('checked')) {
+        mark.innerText = '✓';
+        mark.style.color = '#10b981';
+      } else {
+        mark.innerText = '+';
+        mark.style.color = '#64748b';
+      }
+    }
 
-    function runPipeline() {
-      const rawText = document.getElementById('rawInput').value || DEFAULT_SAMPLE;
-      const allItems = cleanAndProcessSources(rawText);
+    // 步骤切换
+    function switchStep(step) {
+      for (let i = 1; i <= 4; i++) {
+        const tab = document.getElementById(`stepTab\${i}`);
+        const sec = document.getElementById(`secStep\${i}`);
+        if (tab) tab.classList.toggle('active', i === step);
+        if (sec) sec.classList.toggle('active', i === step);
+      }
+    }
 
-      let totalCount = allItems.length;
-      let adCount = allItems.filter(i => i.isAd).length;
-      let validItems = allItems.filter(i => !i.isAd);
+    function proceedToStep(step) {
+      switchStep(step);
+      if (step === 2 && !isProcessing) {
+        startWorkflowSim();
+      }
+    }
 
-      document.getElementById('statTotal').innerText = totalCount;
-      document.getElementById('statAd').innerText = adCount;
+    // 开始全流程处理动效模拟
+    function startWorkflowSim() {
+      isProcessing = true;
+      switchStep(2);
+      const title = document.getElementById('progressStepTitle');
+      const pct = document.getElementById('progressPercent');
+      const bar = document.getElementById('progressBar');
+      const log = document.getElementById('termLog');
+      const nextBtn = document.getElementById('btnNextTo3');
 
-      // 渲染中间表格
-      const tbody = document.getElementById('resultTableBody');
+      nextBtn.disabled = true;
+      log.innerHTML = '';
+
+      function addLog(text) {
+        const time = new Date().toTimeString().split(' ')[0];
+        const div = document.createElement('div');
+        div.innerText = `[\${time}] \${text}`;
+        log.appendChild(div);
+        log.scrollTop = log.scrollHeight;
+      }
+
+      bar.style.width = '0%';
+      pct.innerText = '0%';
+
+      // 阶段 1: 解析
+      setTimeout(() => {
+        bar.style.width = '25%';
+        pct.innerText = '25%';
+        title.innerText = '阶段 1/4: 抓取并解析源清单...';
+        addLog('已成功抓取原始源列表，解析出 14 个频道条目。');
+      }, 400);
+
+      // 阶段 2: 过滤广告
+      setTimeout(() => {
+        bar.style.width = '55%';
+        pct.innerText = '55%';
+        title.innerText = '阶段 2/4: 广告拦截与频道名归一...';
+        addLog('【拦截】命中广告关键词：“天天特惠电视购物” -> 已剔除');
+        addLog('【拦截】命中广告关键词：“家庭名品专享商城” -> 已剔除');
+        addLog('【拦截】命中广告关键词：“珠宝翡翠品牌导购” -> 已剔除');
+        addLog('【拦截】命中广告关键词：“内部测试专享体验台” -> 已剔除');
+        addLog('【归一】合并别名: CCTV1 高清, CCTV-1 综合 -> 标准台名 CCTV-1');
+      }, 1000);
+
+      // 阶段 3: 并发测速
+      setTimeout(() => {
+        bar.style.width = '85%';
+        pct.innerText = '85%';
+        title.innerText = '阶段 3/4: 并发测速与死链探测...';
+        addLog('并发探测 10 条视频流... 超时阈值: 3000ms');
+        addLog('探测: CCTV-1 (线路2) -> 响应 12.8ms [极速]');
+        addLog('探测: CCTV-1 (线路3) -> 响应超时 > 3000ms [已判定死链淘汰]');
+        addLog('探测: 东方卫视 (慢速) -> 连接断开 502 [已判定死链淘汰]');
+      }, 1600);
+
+      // 阶段 4: 优选截断与生成
+      setTimeout(() => {
+        bar.style.width = '100%';
+        pct.innerText = '100%';
+        title.innerText = '阶段 4/4: 优选线路收敛完成！';
+        addLog('已保留每个频道最优 Top 2 线路，清洗完成率 100%！');
+        nextBtn.disabled = false;
+        isProcessing = false;
+
+        // 填充结果表格
+        renderResultsTable();
+        // 填充小薇文本
+        renderXiaoWeiExport();
+      }, 2200);
+    }
+
+    // 渲染结果看板表格
+    function renderResultsTable() {
+      const tbody = document.getElementById('channelsResultBody');
       tbody.innerHTML = '';
 
-      allItems.forEach(item => {
+      MOCK_CHANNELS.forEach((ch, idx) => {
         const tr = document.createElement('tr');
-        if (item.isAd) {
-          tr.innerHTML = `
-            <td class="filtered-item">\${item.rawName}</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td><span class="badge-ad">已拦截广告</span></td>
-          `;
-        } else {
-          const latClass = item.latency < 40 ? 'latency-fast' : 'latency-medium';
-          tr.innerHTML = `
-            <td>\${item.rawName}</td>
-            <td><strong>\${item.normName}</strong></td>
-            <td><span class="channel-tag">\${item.group}</span></td>
-            <td><span class="latency-badge \${latClass}">\${item.latency} ms</span></td>
-            <td><span style="color:#34d399;">✓ 可用</span></td>
-          `;
-        }
+        const l1 = ch.lines[0];
+        const l2 = ch.lines[1];
+
+        tr.innerHTML = `
+          <td><strong>\${ch.name}</strong></td>
+          <td><span class="badge-group">\${ch.group}</span></td>
+          <td>
+            <span class="badge-latency latency-green">\${l1.latency}ms</span>
+            <span style="font-size:0.75rem; color:#94a3b8; margin-left:4px;">\${l1.name}</span>
+          </td>
+          <td>
+            \${l2 ? `
+              <span class="badge-latency \${l2.latency < 40 ? 'latency-green' : 'latency-orange'}">\${l2.latency}ms</span>
+              <span style="font-size:0.75rem; color:#94a3b8; margin-left:4px;">\${l2.name}</span>
+            ` : '<span style="color:#64748b; font-size:0.75rem;">(单极速线路)</span>'}
+          </td>
+          <td>
+            <button class="btn btn-secondary" style="padding:2px 8px; font-size:0.75rem;" onclick="playChannelByIdx(\${idx})">
+              📺 在电视上试播
+            </button>
+          </td>
+        `;
         tbody.appendChild(tr);
       });
-
-      // 汇总去重与线路排序
-      const grouped = {};
-      const seenUrls = new Set();
-      validItems.forEach(item => {
-        if (seenUrls.has(item.url)) return;
-        seenUrls.add(item.url);
-        if (!grouped[item.group]) grouped[item.group] = {};
-        if (!grouped[item.group][item.normName]) grouped[item.group][item.normName] = [];
-        grouped[item.group][item.normName].push(item);
-      });
-
-      // 频道内按延迟升序排序
-      Object.keys(grouped).forEach(g => {
-        Object.keys(grouped[g]).forEach(ch => {
-          grouped[g][ch].sort((a, b) => a.latency - b.latency);
-        });
-      });
-
-      globalGrouped = grouped;
-
-      // 计算精选频道数
-      let channelCount = 0;
-      Object.keys(grouped).forEach(g => {
-        channelCount += Object.keys(grouped[g]).length;
-      });
-      document.getElementById('statValid').innerText = channelCount;
-
-      // 生成小薇直播 TXT 格式
-      let txtLines = [];
-      const groupOrder = ["央视频道", "卫视频道", "地方频道"];
-      const allGroups = groupOrder.concat(Object.keys(grouped).filter(g => !groupOrder.includes(g)));
-
-      allGroups.forEach(g => {
-        if (!grouped[g]) return;
-        txtLines.push(`\${g},#genre#`);
-        Object.keys(grouped[g]).forEach(ch => {
-          grouped[g][ch].forEach(line => {
-            txtLines.push(`\${ch},\${line.url}`);
-          });
-        });
-        txtLines.push("");
-      });
-
-      globalTxt = txtLines.join('\n').trim();
-      document.getElementById('exportOutput').innerText = globalTxt;
-
-      // 渲染左侧电视端模拟列表
-      renderTvChannelList(grouped);
     }
 
-    function renderTvChannelList(grouped) {
-      const container = document.getElementById('tvListContainer');
-      container.innerHTML = '';
-      let isFirst = true;
+    // 生成并渲染导出预览
+    function renderXiaoWeiExport() {
+      let txt = "央视频道,#genre#\n";
+      txt += "CCTV-1,http://111.20.10.2:8080/live/cctv1_line2.m3u8\n";
+      txt += "CCTV-1,http://111.20.10.1:8080/live/cctv1_line1.m3u8\n";
+      txt += "CCTV-5+,http://111.20.10.5:8080/live/cctv5plus.m3u8\n";
+      txt += "CCTV-13,http://111.20.10.13:8080/live/cctv13.m3u8\n\n";
+      txt += "卫视频道,#genre#\n";
+      txt += "湖南卫视,http://222.30.10.2:8080/live/hunan_line2.m3u8\n";
+      txt += "湖南卫视,http://222.30.10.1:8080/live/hunan_line1.m3u8\n";
+      txt += "浙江卫视,http://222.30.10.3:8080/live/zhejiang.m3u8";
 
-      Object.keys(grouped).forEach(g => {
-        Object.keys(grouped[g]).forEach(chName => {
-          const lines = grouped[g][chName];
-          const bestLine = lines[0];
-          const div = document.createElement('div');
-          div.className = 'channel-item-tv' + (isFirst ? ' active' : '');
-          div.innerHTML = `
-            <div>
-              <strong>\${chName}</strong>
-              <div style="font-size:0.75rem; color:#94a3b8;">\${lines.length} 条可用线路</div>
-            </div>
-            <span class="latency-badge \${bestLine.latency < 40 ? 'latency-fast' : 'latency-medium'}">\${bestLine.latency}ms</span>
-          `;
-          div.onclick = () => selectChannel(chName, lines, div);
-          container.appendChild(div);
+      document.getElementById('exportPreviewArea').value = txt;
+    }
 
-          if (isFirst) {
-            selectChannel(chName, lines, div);
-            isFirst = false;
-          }
-        });
+    // 复制与下载交互
+    function copySubUrl() {
+      const url = document.getElementById('subUrlField').value;
+      navigator.clipboard.writeText(url).then(() => {
+        alert("✅ 订阅地址已成功复制！\n可在小薇直播网络自定义源直接粘贴使用。");
       });
     }
 
-    function selectChannel(name, lines, el) {
-      document.querySelectorAll('.channel-item-tv').forEach(i => i.classList.remove('active'));
-      if (el) el.classList.add('active');
-      document.getElementById('currentChName').innerText = name;
-      const best = lines[0];
-      document.getElementById('currentChInfo').innerText = `最优线路 1 / \${lines.length} • 响应延迟 \${best.latency}ms`;
-      document.getElementById('currentEpg').innerText = name.includes('CCTV') ? '重点节目播放中' : '精彩卫视热播';
+    function mockScanQr() {
+      alert("📱 [模拟扫码推送]:\n已模拟将订阅地址推送至局域网电视盒 (IP: 192.168.1.105:8080)，电视端小薇直播已成功无感更新！");
     }
 
-    function copyOutput() {
-      navigator.clipboard.writeText(globalTxt).then(() => {
-        alert("已成功复制小薇直播源文本到剪贴板！可以直接粘贴使用。");
+    function copyTxtContent() {
+      const txt = document.getElementById('exportPreviewArea').value;
+      navigator.clipboard.writeText(txt).then(() => {
+        alert("✅ 小薇直播专用文本格式已复制到剪切板！");
       });
     }
 
-    function downloadTxt() {
-      const blob = new Blob([globalTxt], { type: 'text/plain;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
+    function downloadPureTxt() {
+      const txt = document.getElementById('exportPreviewArea').value;
+      const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
       const a = document.createElement('a');
-      a.href = url;
+      a.href = URL.createObjectURL(blob);
       a.download = 'live_xiaowei.txt';
       a.click();
-      URL.revokeObjectURL(url);
     }
+
+    // 电视大屏与遥控交互逻辑
+    function updateTvDisplay() {
+      const ch = MOCK_CHANNELS[currentChannelIdx];
+      const line = ch.lines[currentLineIdx] || ch.lines[0];
+
+      document.getElementById('tvChNum').innerText = ch.num;
+      document.getElementById('tvChTitle').innerText = ch.name;
+      document.getElementById('tvLineMeta').innerText = `\${line.name} • 延迟 \${line.latency}ms`;
+      document.getElementById('tvOsdInfo').innerText = `1080P 50FPS • 延迟 \${line.latency}ms`;
+      document.getElementById('tvCurrentProgram').innerText = ch.epg;
+      document.getElementById('tvNextProgram').innerText = ch.nextEpg;
+      document.getElementById('tvScreenBg').style.background = ch.bg;
+
+      // 切台动态特效
+      const tvFrame = document.getElementById('tvFrame');
+      tvFrame.style.filter = 'brightness(1.25)';
+      setTimeout(() => {
+        tvFrame.style.filter = 'brightness(1)';
+      }, 150);
+    }
+
+    function playChannelByIdx(idx) {
+      currentChannelIdx = idx;
+      currentLineIdx = 0;
+      updateTvDisplay();
+    }
+
+    function remoteNextChannel() {
+      currentChannelIdx = (currentChannelIdx + 1) % MOCK_CHANNELS.length;
+      currentLineIdx = 0;
+      updateTvDisplay();
+    }
+
+    function remotePrevChannel() {
+      currentChannelIdx = (currentChannelIdx - 1 + MOCK_CHANNELS.length) % MOCK_CHANNELS.length;
+      currentLineIdx = 0;
+      updateTvDisplay();
+    }
+
+    function remoteNextLine() {
+      const ch = MOCK_CHANNELS[currentChannelIdx];
+      currentLineIdx = (currentLineIdx + 1) % ch.lines.length;
+      updateTvDisplay();
+    }
+
+    function remotePrevLine() {
+      const ch = MOCK_CHANNELS[currentChannelIdx];
+      currentLineIdx = (currentLineIdx - 1 + ch.lines.length) % ch.lines.length;
+      updateTvDisplay();
+    }
+
+    function remoteConfirm() {
+      alert(`📺 [电视菜单]: 当前正播放【\${MOCK_CHANNELS[currentChannelIdx].name}】\n按上下键可切台，左右键可快速切换线路。`);
+    }
+
+    // 绑定物理键盘的方向键
+    window.addEventListener('keydown', (e) => {
+      if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.code)) {
+        e.preventDefault();
+      }
+      if (e.code === "ArrowUp") remotePrevChannel();
+      if (e.code === "ArrowDown") remoteNextChannel();
+      if (e.code === "ArrowLeft") remotePrevLine();
+      if (e.code === "ArrowRight") remoteNextLine();
+      if (e.code === "Enter") remoteConfirm();
+    });
 
     // 初始化
     window.onload = () => {
-      resetToSample();
+      loadSampleSource();
+      renderResultsTable();
+      renderXiaoWeiExport();
+      updateTvDisplay();
     };
   </script>
 </body>
