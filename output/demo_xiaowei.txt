@@ -1,0 +1,8 @@
+央视频道,#genre#
+CCTV-1,http://111.20.10.2:8080/live/cctv1_line2.m3u8
+CCTV-1,http://111.20.10.1:8080/live/cctv1_line1.m3u8
+CCTV-5+,http://111.20.10.5:8080/live/cctv5plus.m3u8
+
+卫视频道,#genre#
+湖南卫视,http://222.30.10.2:8080/live/hunan_line2.m3u8
+浙江卫视,http://222.30.10.3:8080/live/zhejiang.m3u8

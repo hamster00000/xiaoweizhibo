@@ -1,0 +1,68 @@
+{
+  "sources": [
+    {
+      "name": "Guovin_IPTV",
+      "url": "https://raw.githubusercontent.com/Guovin/iptv-api/gd/output/result.m3u",
+      "format": "m3u"
+    },
+    {
+      "name": "YueChan_Live",
+      "url": "https://raw.githubusercontent.com/YueChan/Live/main/IPTV.m3u",
+      "format": "m3u"
+    },
+    {
+      "name": "fanmingming_ipv6",
+      "url": "https://live.fanmingming.com/tv/m3u/ipv6.m3u",
+      "format": "m3u"
+    }
+  ],
+  "checker": {
+    "timeout": 3.0,
+    "concurrency": 25,
+    "max_retries": 1,
+    "user_agent": "okhttp/3.15 XiaoWeiLive/5.0.0"
+  },
+  "channel_groups": [
+    {
+      "name": "央视频道",
+      "patterns": [
+        "^CCTV-\\d+(\\+)?$",
+        "^CCTV-4K$",
+        "^CCTV-8K$",
+        "^CCTV-5\\+$",
+        "^CGTN.*"
+      ]
+    },
+    {
+      "name": "卫视频道",
+      "patterns": [
+        ".*卫视$"
+      ]
+    },
+    {
+      "name": "地方频道",
+      "patterns": [
+        ".*综合.*",
+        ".*都市.*",
+        ".*影视.*",
+        ".*新闻.*"
+      ]
+    }
+  ],
+  "ad_keywords": [
+    "购物",
+    "特惠",
+    "商城",
+    "导购",
+    "测试",
+    "广告",
+    "体验",
+    "专享"
+  ],
+  "output": {
+    "dir": "output",
+    "xiaowei_txt": "live_xiaowei.txt",
+    "standard_m3u": "live.m3u",
+    "max_lines_per_channel": 4
+  }
+}
