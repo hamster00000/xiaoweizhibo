@@ -94,25 +94,25 @@ python3 demo.py
 
 ## 📺 电视端与播放器接入方式
 
-### 方式零：小米电视专属 APK 打包与安装（开箱即用 🌟）
+### 方式零：小米电视专属 APK 打包与安装（独立包名·双应用并存 🌟）
 
-本项目已针对**小米电视（PatchWall / Android TV / MIUI TV）**及各大安卓机顶盒深度定制了开箱即用的安装包准备工具与局域网无线安装助手：
+针对电视端已安装“小薇直播”的用户，本项目采用**独立应用包名（`com.qingfeng.live.tv`）与专属签名**，在小米电视上作为全新应用**【清风直播】**安装，**绝不覆盖原有的小薇直播**，两者可完全并存、互不干扰：
 
-#### 1. 一键准备/拉取小米电视专用 APK
+#### 1. 一键准备/生成清风直播独立电视 APK
 ```bash
-# 准备针对小米电视深度优化的去广告纯净版直播 APK (18MB)
-python3 scripts/package_tv_app.py xiaowei
+# 一键生成清风专属电视 APK (独立包名: com.qingfeng.live.tv, 绝不覆盖小薇直播)
+python3 scripts/package_tv_app.py qingfeng
 
-# 或准备现代原生 Android TV 播放器 (MyTV 电视版)
+# 或拉取其他电视播放器
 python3 scripts/package_tv_app.py mytv
 ```
-应用安装包将自动输出至 `output/tv_app/QingFeng_XiaoWei_TV.apk`（默认符号链接 `output/tv_app/tv-app.apk`）。
+应用安装包输出至 `output/tv_app/QingFeng_Live_TV.apk`（默认符号链接 `output/tv_app/tv-app.apk`，大小 17.5 MB）。
 
 #### 2. 小米电视 3 种极速安装方式
 * **方法 A（U 盘直接安装，最推荐）**：
   1. 开启小米电视权限：进入电视【设置】 ➔ 【账号与安全】 ➔ 将【安装未知来源的应用】更改为【允许】；
   2. 将生成的 `output/tv_app/tv-app.apk` 拷贝至 U 盘根目录；
-  3. 将 U 盘插入小米电视 USB 接口，在电视弹出的“发现新设备”或【高清播放器】中打开 APK 点击安装即可！
+  3. 将 U 盘插入小米电视 USB 接口，在电视弹出的“发现新设备”或【高清播放器】中打开 APK 点击安装即可！系统将作为【清风直播】独立应用安装，原有小薇直播完好保留。
 * **方法 B（局域网 ADB 无线一键直推，免拔插 U 盘）**：
   在电视【关于】连按 5 次版本号开启开发者选项并开启【ADB 调试】，电脑端直接运行：
   ```bash

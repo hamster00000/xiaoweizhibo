@@ -62,7 +62,7 @@ class LiveDemoHandler(http.server.SimpleHTTPRequestHandler):
             return
 
         # 3.3 小米电视/Android TV 安装包一键下载
-        if parsed.path in ["/download/tv-app.apk", "/download/xiaowei.apk", "/download/mytv.apk"]:
+        if parsed.path in ["/download/tv-app.apk", "/download/qingfeng.apk", "/download/xiaowei.apk", "/download/mytv.apk"]:
             self._handle_tv_download(parsed.path)
             return
 
@@ -79,7 +79,7 @@ class LiveDemoHandler(http.server.SimpleHTTPRequestHandler):
 
     def do_HEAD(self):
         parsed = urlparse(self.path)
-        tv_download_routes = ["/download/tv-app.apk", "/download/xiaowei.apk", "/download/mytv.apk"]
+        tv_download_routes = ["/download/tv-app.apk", "/download/qingfeng.apk", "/download/xiaowei.apk", "/download/mytv.apk"]
         if parsed.path in ["/live.txt", "/live.m3u", "/api/status", "/api/channels", "/api/tv/info", "/api/stream_proxy"] + tv_download_routes:
             self.do_GET()
             return
@@ -420,12 +420,14 @@ class LiveDemoHandler(http.server.SimpleHTTPRequestHandler):
         info = {
             "status": "success",
             "tv_app_status": status_data,
+            "isolation_notice": "清风直播拥有独立包名(com.qingfeng.live.tv)，安装时绝不覆盖已有的小薇直播，支持双应用并存。",
             "subscription_urls": {
                 "xiaowei": f"http://{host}/live.txt",
                 "m3u": f"http://{host}/live.m3u",
             },
             "download_urls": {
                 "recommended": f"http://{host}/download/tv-app.apk",
+                "qingfeng": f"http://{host}/download/qingfeng.apk",
                 "xiaowei": f"http://{host}/download/xiaowei.apk",
                 "mytv": f"http://{host}/download/mytv.apk",
             },
@@ -434,7 +436,7 @@ class LiveDemoHandler(http.server.SimpleHTTPRequestHandler):
                     "在小米电视【设置】->【账号与安全】中将【安装未知来源的应用】设为【允许】",
                     "在电脑端下载推荐 APK (tv-app.apk) 拷贝至 U 盘根目录",
                     "将 U 盘插入小米电视 USB 口，在弹出的窗口或【高清播放器】中打开 APK 点击安装",
-                    "打开小薇直播后进入【设置】->【自定义频道】/【网络自定义】，填入订阅链接"
+                    "打开【清风直播】后进入【设置】->【自定义频道】/【网络自定义】，填入订阅链接"
                 ],
                 "adb": f"./scripts/install_to_mi_tv.sh <电视IP>"
             }
@@ -456,9 +458,12 @@ class LiveDemoHandler(http.server.SimpleHTTPRequestHandler):
         elif "mytv" in req_path:
             filename = "QingFeng_MyTV_TV.apk"
             target_key = "mytv"
+        elif "qingfeng" in req_path:
+            filename = "QingFeng_Live_TV.apk"
+            target_key = "qingfeng"
         else:
             filename = "tv-app.apk"
-            target_key = "xiaowei"
+            target_key = "qingfeng"
 
         apk_path = os.path.join(tv_dir, filename)
         if not os.path.exists(apk_path) or os.path.getsize(apk_path) < 1024 * 1024:
@@ -477,7 +482,12 @@ class LiveDemoHandler(http.server.SimpleHTTPRequestHandler):
             return
 
         file_size = os.path.getsize(apk_path)
-        display_name = "QingFeng_XiaoWei_TV.apk" if filename in ["tv-app.apk", "QingFeng_XiaoWei_TV.apk"] else filename
+        if filename in ["tv-app.apk", "QingFeng_Live_TV.apk"]:
+            display_name = "QingFeng_Live_TV.apk"
+        elif filename == "QingFeng_XiaoWei_TV.apk":
+            display_name = "XiaoWei_Live_Original.apk"
+        else:
+            display_name = filename
 
         self.send_response(200)
         self.send_header("Content-Type", "application/vnd.android.package-archive")
