@@ -36,13 +36,13 @@ class LiveDemoHandler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
         parsed = urlparse(self.path)
 
-        # 1. 清风直播专属订阅源直链
-        if parsed.path == "/live.txt":
+        # 1. 清风直播专属订阅源直链 (支持 /live.txt, /best.txt, /live_best.txt)
+        if parsed.path in ["/live.txt", "/best.txt", "/live_best.txt", "/live_single.txt", "/live"]:
             self._handle_live_txt(parsed)
             return
 
         # 2. 通用标准 M3U 直播源直链
-        if parsed.path == "/live.m3u":
+        if parsed.path in ["/live.m3u", "/best.m3u", "/live_best.m3u"]:
             self._handle_live_m3u(parsed)
             return
 
@@ -80,7 +80,8 @@ class LiveDemoHandler(http.server.SimpleHTTPRequestHandler):
     def do_HEAD(self):
         parsed = urlparse(self.path)
         tv_download_routes = ["/download/tv-app.apk", "/download/qingfeng.apk", "/download/xiaowei.apk", "/download/mytv.apk"]
-        if parsed.path in ["/live.txt", "/live.m3u", "/api/status", "/api/channels", "/api/tv/info", "/api/stream_proxy"] + tv_download_routes:
+        live_routes = ["/live.txt", "/best.txt", "/live_best.txt", "/live_single.txt", "/live", "/live.m3u", "/best.m3u", "/live_best.m3u"]
+        if parsed.path in live_routes + ["/api/status", "/api/channels", "/api/tv/info", "/api/stream_proxy"] + tv_download_routes:
             self.do_GET()
             return
         return super().do_HEAD()
@@ -121,12 +122,13 @@ class LiveDemoHandler(http.server.SimpleHTTPRequestHandler):
                 self.wfile.write("直播源尚未生成，请稍后刷新或在控制台触发更新任务。".encode("utf-8"))
                 return
 
-        only_best = False
+        # 默认只输出单台最好的信号源（除非显式指定 all=1 或 full=1）
+        only_best = True
         if parsed and parsed.query:
             qs = parse_qs(parsed.query)
-            only_best = qs.get("only_best", ["0"])[0].lower() in ["1", "true", "yes"] or \
-                        qs.get("best", ["0"])[0].lower() in ["1", "true", "yes"] or \
-                        qs.get("single", ["0"])[0].lower() in ["1", "true", "yes"]
+            if qs.get("all", ["0"])[0].lower() in ["1", "true", "yes"] or \
+               qs.get("full", ["0"])[0].lower() in ["1", "true", "yes"]:
+                only_best = False
 
         try:
             with open(txt_path, "r", encoding="utf-8", errors="replace") as f:
@@ -170,12 +172,13 @@ class LiveDemoHandler(http.server.SimpleHTTPRequestHandler):
             self.wfile.write("M3U 播放列表尚未生成，请稍后刷新。".encode("utf-8"))
             return
 
-        only_best = False
+        # 默认只输出单台最好的信号源（除非显式指定 all=1 或 full=1）
+        only_best = True
         if parsed and parsed.query:
             qs = parse_qs(parsed.query)
-            only_best = qs.get("only_best", ["0"])[0].lower() in ["1", "true", "yes"] or \
-                        qs.get("best", ["0"])[0].lower() in ["1", "true", "yes"] or \
-                        qs.get("single", ["0"])[0].lower() in ["1", "true", "yes"]
+            if qs.get("all", ["0"])[0].lower() in ["1", "true", "yes"] or \
+               qs.get("full", ["0"])[0].lower() in ["1", "true", "yes"]:
+                only_best = False
 
         try:
             with open(m3u_path, "r", encoding="utf-8", errors="replace") as f:
