@@ -25,13 +25,35 @@ class StreamExporter:
         "陕西卫视", "贵州卫视", "云南卫视", "广西卫视", "海南卫视"
     ]
 
-    def __init__(self, max_lines_per_channel: int = 3, only_best: bool = False):
+    DEFAULT_PREFERRED_KEYWORDS = [
+        "yangshipin", "央视频", "ysp", "cctv.cn", "cntv.cn", "cctvpic.com", "yspapp"
+    ]
+
+    def __init__(
+        self,
+        max_lines_per_channel: int = 3,
+        only_best: bool = False,
+        preferred_keywords: Optional[List[str]] = None,
+        prioritize_yangshipin: bool = True
+    ):
         self.max_lines_per_channel = max_lines_per_channel
         self.only_best = only_best
+        kws = preferred_keywords if preferred_keywords is not None else self.DEFAULT_PREFERRED_KEYWORDS
+        self.preferred_keywords = [kw.lower() for kw in kws]
+        self.prioritize_yangshipin = prioritize_yangshipin
+
+    def is_preferred(self, item: ChannelItem) -> bool:
+        """检查线路是否属于优先推荐线路 (如央视频 yangshipin / ysp 等官方优质源)"""
+        if not self.prioritize_yangshipin:
+            return False
+        if hasattr(item, "is_yangshipin") and item.is_yangshipin:
+            return True
+        target = f"{item.url} {item.raw_name} {item.source_origin} {item.tvg_id}".lower()
+        return any(kw in target for kw in self.preferred_keywords)
 
     def deduplicate_and_rank(self, items: List[ChannelItem], only_best: Optional[bool] = None) -> Dict[str, Dict[str, List[ChannelItem]]]:
         """
-        按 [分组 -> 频道名称] 分类去重，并按延迟从小到大保留最优的多条线路
+        按 [分组 -> 频道名称] 分类去重，并优先保留央视频线路、按延迟从小到大保留最优线路
         结构: { group_name: { channel_name: [ChannelItem, ...] } }
         """
         is_only_best = self.only_best if only_best is None else only_best
@@ -52,10 +74,14 @@ class StreamExporter:
             seen_urls.add(item.url)
             grouped[item.group][item.name].append(item)
 
-        # 对每个频道的线路按响应延迟升序排序并截取最大限制
+        # 对每个频道的线路按 [是否优先(央视频等) -> 响应延迟升序] 排序并截取最大限制
         for group, channels in grouped.items():
             for ch_name, lines in channels.items():
-                lines.sort(key=lambda x: (x.latency_ms is None, x.latency_ms or 99999))
+                lines.sort(key=lambda x: (
+                    not self.is_preferred(x),
+                    x.latency_ms is None,
+                    x.latency_ms or 99999
+                ))
                 grouped[group][ch_name] = lines[:line_limit]
 
         return grouped

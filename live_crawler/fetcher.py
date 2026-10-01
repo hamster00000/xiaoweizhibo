@@ -54,6 +54,12 @@ class ChannelItem:
     def logo(self, val: str):
         self.tvg_logo = val
 
+    @property
+    def is_yangshipin(self) -> bool:
+        """判断是否属于央视频(yangshipin/ysp/cctv.cn等)高质量官方源"""
+        target = f"{self.url} {self.raw_name} {self.source_origin} {self.tvg_id}".lower()
+        return any(kw in target for kw in ("yangshipin", "央视频", "ysp", "cctv.cn", "cntv.cn", "cctvpic.com"))
+
 
 def decode_bytes_adaptive(raw_bytes: bytes) -> str:
     """自适应多编码嗅探解码 (UTF-8 优先，GB18030/GBK 备选)"""
@@ -76,7 +82,12 @@ class SourceFetcher:
         """从 URL 或本地路径自适应读取源内容"""
         if source_path_or_url.startswith(("http://", "https://")):
             headers = {"User-Agent": self.user_agent}
-            with httpx.Client(timeout=timeout, verify=False, follow_redirects=True, trust_env=False) as client:
+            http_proxy = os.environ.get("https_proxy") or os.environ.get("HTTPS_PROXY") or \
+                         os.environ.get("http_proxy") or os.environ.get("HTTP_PROXY")
+            if http_proxy and not http_proxy.startswith("http"):
+                http_proxy = None
+
+            with httpx.Client(timeout=timeout, verify=False, follow_redirects=True, proxy=http_proxy, trust_env=False) as client:
                 resp = client.get(source_path_or_url, headers=headers)
                 resp.raise_for_status()
                 return decode_bytes_adaptive(resp.content)

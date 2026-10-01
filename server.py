@@ -314,11 +314,13 @@ class LiveDemoHandler(http.server.SimpleHTTPRequestHandler):
                                     "lines": []
                                 }
                             line_count = len(channels_dict[name]["lines"]) + 1
+                            is_ysp = any(kw in url.lower() or kw in name.lower() for kw in ["yangshipin", "ysp", "cctv.cn", "cntv.cn", "央视频"])
                             channels_dict[name]["lines"].append({
                                 "name": f"线路 {line_count}",
                                 "url": url,
                                 "latency": round(15.0 + (line_count * 12.5) % 60, 1),
                                 "is_best": (line_count == 1),
+                                "is_yangshipin": is_ysp,
                                 "quality": ChannelNormalizer.detect_quality(name, url)
                             })
             except Exception as e:
@@ -350,9 +352,11 @@ class LiveDemoHandler(http.server.SimpleHTTPRequestHandler):
 
             channel_groups = self.manager.config.get("channel_groups") if self.manager else None
             ad_kws = self.manager.config.get("ad_keywords") if self.manager else None
+            pref_kws = self.manager.config.get("preferred_keywords") if self.manager else None
+            prioritize_ysp = self.manager.config.get("prioritize_yangshipin", True) if self.manager else True
             normalizer = ChannelNormalizer(channel_groups=channel_groups, ad_keywords=ad_kws)
             fetcher = SourceFetcher(normalizer=normalizer)
-            exporter = StreamExporter(max_lines_per_channel=max_lines)
+            exporter = StreamExporter(max_lines_per_channel=max_lines, preferred_keywords=pref_kws, prioritize_yangshipin=prioritize_ysp)
 
             items = fetcher.parse(raw_text)
             for idx, it in enumerate(items):

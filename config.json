@@ -21,16 +21,25 @@
       "format": "m3u"
     },
     {
-      "name": "Ftindy_IPTV",
-      "url": "https://raw.githubusercontent.com/Ftindy/IPTV-URL/main/IPTV.m3u",
-      "format": "m3u"
-    },
-    {
       "name": "ssili126_itv",
       "url": "https://raw.githubusercontent.com/ssili126/tv/main/itvlist.m3u",
       "format": "m3u"
+    },
+    {
+      "name": "fanmingming_index",
+      "url": "https://raw.githubusercontent.com/fanmingming/live/main/tv/m3u/index.m3u",
+      "format": "m3u"
     }
   ],
+  "preferred_keywords": [
+    "yangshipin",
+    "央视频",
+    "ysp",
+    "cctv.cn",
+    "cntv.cn",
+    "cctvpic.com"
+  ],
+  "prioritize_yangshipin": true,
   "checker": {
     "timeout": 3.0,
     "concurrency": 25,

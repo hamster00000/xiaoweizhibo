@@ -2580,6 +2580,7 @@ CHC动作电影,http://38.75.136.137:98/gslb/dsdqbv/chcdz.m3u8?auth=test20251009
             <td>
               <span class="badge-latency latency-green">${l1.latency}ms</span>
               <span class="badge-best-source">⭐ 最优第一源</span>
+              ${l1.is_yangshipin ? '<span style="background:linear-gradient(135deg, #7c3aed, #9333ea); color:#fff; font-size:0.68rem; padding:1px 6px; border-radius:4px; font-weight:600; margin-left:4px;">📺 央视频</span>' : ''}
               <span style="font-size:0.75rem; color:#94a3b8; margin-left:4px;">${l1.name}</span>
               ${backupLinesCount > 0 ? `<span style="font-size:0.7rem; color:#64748b; margin-left:6px;" title="有 ${backupLinesCount} 条备用源，可按左右键切换">(+${backupLinesCount}条备用源)</span>` : ''}
             </td>
@@ -2602,11 +2603,13 @@ CHC动作电影,http://38.75.136.137:98/gslb/dsdqbv/chcdz.m3u8?auth=test20251009
             <td><span class="badge-group">${ch.group || '未分组'}</span></td>
             <td>
               <span class="badge-latency latency-green">${l1.latency}ms</span>
+              ${l1.is_yangshipin ? '<span style="background:linear-gradient(135deg, #7c3aed, #9333ea); color:#fff; font-size:0.65rem; padding:1px 5px; border-radius:3px; margin-left:2px;">央视频</span>' : ''}
               <span style="font-size:0.75rem; color:#94a3b8; margin-left:4px;">${l1.name}</span>
             </td>
             <td>
               ${l2 ? `
                 <span class="badge-latency ${l2.latency < 40 ? 'latency-green' : 'latency-orange'}">${l2.latency}ms</span>
+                ${l2.is_yangshipin ? '<span style="background:linear-gradient(135deg, #7c3aed, #9333ea); color:#fff; font-size:0.65rem; padding:1px 5px; border-radius:3px; margin-left:2px;">央视频</span>' : ''}
                 <span style="font-size:0.75rem; color:#94a3b8; margin-left:4px;">${l2.name}</span>
               ` : '<span style="color:#64748b; font-size:0.75rem;">(单极速线路)</span>'}
             </td>
@@ -2690,6 +2693,7 @@ CHC动作电影,http://38.75.136.137:98/gslb/dsdqbv/chcdz.m3u8?auth=test20251009
           </div>
           <div style="display:flex; align-items:center; gap:5px;">
             <span class="badge-latency latency-green" style="font-size:0.62rem; padding:1px 5px;">${bestLine.latency}ms</span>
+            ${bestLine.is_yangshipin ? '<span style="background:#7c3aed; color:#fff; font-size:0.58rem; padding:1px 4px; border-radius:3px;">央视频</span>' : ''}
             <span class="badge-quality-tag" style="font-size:0.62rem;">${bestLine.quality || '720P'}</span>
             <span class="badge-best-source" style="font-size:0.62rem;">⭐最优</span>
           </div>

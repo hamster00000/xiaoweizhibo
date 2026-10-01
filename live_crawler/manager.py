@@ -33,8 +33,12 @@ class LiveSourceManager:
         )
 
         output_cfg = self.config.get("output", {})
+        preferred_kws = self.config.get("preferred_keywords")
+        prioritize_ysp = self.config.get("prioritize_yangshipin", True)
         self.exporter = StreamExporter(
-            max_lines_per_channel=int(output_cfg.get("max_lines_per_channel", 3))
+            max_lines_per_channel=int(output_cfg.get("max_lines_per_channel", 3)),
+            preferred_keywords=preferred_kws,
+            prioritize_yangshipin=prioritize_ysp
         )
 
         # 熔断安全阈值（若有效源数低于该值且已存在旧文件，则熔断保护拒绝覆写）
