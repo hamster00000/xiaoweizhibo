@@ -51,11 +51,23 @@ class LiveDemoHandler(http.server.SimpleHTTPRequestHandler):
             self._handle_status()
             return
 
-        # 4. 默认首页路由
+        # 4. HLS 媒体流跨域代理接口 (供网页端播放器跨域播放直播流)
+        if parsed.path == "/api/stream_proxy":
+            self._handle_stream_proxy(parsed)
+            return
+
+        # 5. 默认首页路由
         if parsed.path in ["", "/"]:
             self.path = "/index.html"
 
         return super().do_GET()
+
+    def do_OPTIONS(self):
+        self.send_response(204)
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "*")
+        self.end_headers()
 
     def do_POST(self):
         parsed = urlparse(self.path)
@@ -219,6 +231,63 @@ class LiveDemoHandler(http.server.SimpleHTTPRequestHandler):
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.end_headers()
         self.wfile.write(json.dumps(data, ensure_ascii=False).encode("utf-8"))
+
+    def _handle_stream_proxy(self, parsed):
+        import urllib.parse
+        import httpx
+        qs = urllib.parse.parse_qs(parsed.query)
+        target_url = qs.get("url", [""])[0]
+        if not target_url or not target_url.startswith(("http://", "https://")):
+            self.send_error(400, "Invalid or missing url parameter")
+            return
+
+        headers = {
+            "User-Agent": "okhttp/3.15 XiaoWeiLive/5.0.0",
+            "Accept": "*/*"
+        }
+        try:
+            with httpx.Client(timeout=8.0, verify=False, follow_redirects=True, trust_env=False) as client:
+                resp = client.get(target_url, headers=headers)
+                if resp.status_code >= 400:
+                    self.send_error(resp.status_code, f"Upstream error {resp.status_code}")
+                    return
+
+                content_type = resp.headers.get("Content-Type", "")
+                content_bytes = resp.content
+
+                # 若是 M3U8 播放列表，重写切片 URL 为经由本地代理的路径
+                if "mpegurl" in content_type or target_url.endswith(".m3u8") or b"#EXTM3U" in content_bytes[:100]:
+                    try:
+                        text = content_bytes.decode("utf-8", errors="replace")
+                        lines = []
+                        for line in text.splitlines():
+                            stripped = line.strip()
+                            if not stripped or stripped.startswith("#"):
+                                lines.append(line)
+                            else:
+                                abs_url = urllib.parse.urljoin(target_url, stripped)
+                                proxied = f"/api/stream_proxy?url={urllib.parse.quote(abs_url)}"
+                                lines.append(proxied)
+                        rewritten = "\n".join(lines).encode("utf-8")
+                        self.send_response(200)
+                        self.send_header("Content-Type", "application/vnd.apple.mpegurl; charset=utf-8")
+                        self.send_header("Access-Control-Allow-Origin", "*")
+                        self.send_header("Content-Length", str(len(rewritten)))
+                        self.end_headers()
+                        self.wfile.write(rewritten)
+                        return
+                    except Exception:
+                        pass
+
+                # 普通 TS 分片或媒体流
+                self.send_response(200)
+                self.send_header("Content-Type", content_type or "video/mp2t")
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.send_header("Content-Length", str(len(content_bytes)))
+                self.end_headers()
+                self.wfile.write(content_bytes)
+        except Exception as e:
+            self.send_error(502, f"Proxy error: {e}")
 
     def _get_output_path(self, key: str, default_name: str) -> str:
         if self.manager and "output" in self.manager.config:

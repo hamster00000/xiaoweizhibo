@@ -124,5 +124,21 @@ CCTV-1 综合,http://test.live/cctv1.m3u8
             self.assertIn("#EXTM3U", data["m3u_text"])
 
 
+    def test_options_cors(self):
+        url = f"http://127.0.0.1:{TEST_PORT}/api/stream_proxy"
+        req = urllib.request.Request(url, method="OPTIONS")
+        with urllib.request.urlopen(req) as resp:
+            self.assertEqual(resp.status, 204)
+            self.assertEqual(resp.headers.get("Access-Control-Allow-Origin"), "*")
+
+    def test_stream_proxy_missing_param(self):
+        url = f"http://127.0.0.1:{TEST_PORT}/api/stream_proxy"
+        try:
+            with urllib.request.urlopen(url) as resp:
+                pass
+        except urllib.error.HTTPError as e:
+            self.assertEqual(e.code, 400)
+
+
 if __name__ == "__main__":
     unittest.main()

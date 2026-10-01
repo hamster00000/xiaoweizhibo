@@ -74,7 +74,7 @@ class StreamChecker:
         completed = 0
 
         limits = httpx.Limits(max_keepalive_connections=self.concurrency, max_connections=self.concurrency * 2)
-        async with httpx.AsyncClient(verify=False, follow_redirects=True, limits=limits) as client:
+        async with httpx.AsyncClient(verify=False, follow_redirects=True, limits=limits, trust_env=False) as client:
             async def _worker(item: ChannelItem):
                 nonlocal completed
                 async with semaphore:

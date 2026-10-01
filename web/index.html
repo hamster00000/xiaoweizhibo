@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>小薇直播纯净版 - MVP 流程交互原型演示</title>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.8/dist/hls.min.js"></script>
   <style>
     :root {
       --bg-dark: #090d16;
@@ -1050,23 +1051,37 @@
       </div>
       <div class="card-body">
         <div class="tv-container">
-          <!-- 电视屏幕 -->
-          <div class="tv-frame" id="tvFrame">
-            <div class="tv-screen-bg" id="tvScreenBg"></div>
-            <div class="tv-scanlines"></div>
+          <div class="tv-frame" id="tvFrame" onclick="toggleOsdDisplay()">
+            <!-- 真实流媒体播放器 -->
+            <video id="tvVideo" playsinline autoplay muted style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:2; background:#000;"></video>
 
-            <div class="tv-osd-top" id="tvOsdInfo">
+            <!-- 动态模拟广播与测试信号 Canvas (在缓冲或信号建立时提供动态广播画面) -->
+            <canvas id="tvTestCanvas" style="position:absolute; inset:0; width:100%; height:100%; z-index:1; pointer-events:none;"></canvas>
+
+            <div class="tv-scanlines" style="z-index:3;"></div>
+
+            <div class="tv-osd-top" id="tvOsdInfo" style="z-index:4;">
               1080P 50FPS • 延迟 12ms
             </div>
-            <div class="tv-live-badge">LIVE 直播</div>
+            <div class="tv-live-badge" style="z-index:4;">LIVE 直播</div>
 
-            <div class="tv-content-center">
+            <!-- 控制工具条 -->
+            <div style="position:absolute; top:12px; right:95px; z-index:5; display:flex; gap:6px;">
+              <button id="btnTvAudio" class="btn btn-secondary" style="padding:2px 8px; font-size:0.72rem; background:rgba(0,0,0,0.65); border:1px solid rgba(255,255,255,0.2);" onclick="event.stopPropagation(); toggleTvAudio()">
+                🔇 开启声音
+              </button>
+            </div>
+
+            <div class="tv-content-center" id="tvOsdCenter" style="z-index:4; transition: opacity 0.5s; pointer-events:none;">
               <div class="tv-ch-number" id="tvChNum">01</div>
               <div class="tv-ch-title" id="tvChTitle">CCTV-1 综合</div>
               <div class="tv-ch-meta" id="tvLineMeta">最优线路 1 • 极速直连</div>
+              <div id="tvPlaybackStatus" style="font-size:0.72rem; color:#38bdf8; margin-top:6px; background:rgba(0,0,0,0.7); padding:3px 10px; border-radius:12px; display:inline-block;">
+                📡 正在加载实时流...
+              </div>
             </div>
 
-            <div class="tv-epg-banner">
+            <div class="tv-epg-banner" id="tvOsdEpg" style="z-index:4; transition: opacity 0.5s;">
               <div>
                 <div class="tv-epg-title" id="tvCurrentProgram">正在播出：新闻联播</div>
                 <div class="tv-epg-next" id="tvNextProgram">稍后播放：焦点访谈 (19:38)</div>
@@ -1540,10 +1555,126 @@ CCTV-13 新闻高清,http://111.20.10.13:8080/live/cctv13.m3u8
     }
 
     // 电视大屏与遥控交互逻辑
+    let currentHls = null;
+    let osdFadeTimer = null;
+    let isOsdVisible = true;
+    let canvasAnimId = null;
+
+    // 动态模拟广播信号与频谱动态画面 (保证屏幕始终处于生动的播放状态)
+    function startCanvasBroadcastAnimation() {
+      const canvas = document.getElementById('tvTestCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+
+      function resize() {
+        if (canvas.width !== canvas.clientWidth || canvas.height !== canvas.clientHeight) {
+          canvas.width = canvas.clientWidth || 480;
+          canvas.height = canvas.clientHeight || 270;
+        }
+      }
+
+      let step = 0;
+      function render() {
+        resize();
+        step += 0.04;
+        const w = canvas.width;
+        const h = canvas.height;
+
+        // 背景渐变
+        const bgGrad = ctx.createLinearGradient(0, 0, w, h);
+        bgGrad.addColorStop(0, '#0a1128');
+        bgGrad.addColorStop(0.5, '#1c1954');
+        bgGrad.addColorStop(1, '#052b3b');
+        ctx.fillStyle = bgGrad;
+        ctx.fillRect(0, 0, w, h);
+
+        // 动态电波网格
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.08)';
+        ctx.lineWidth = 1;
+        const gridSize = 30;
+        for (let x = 0; x < w; x += gridSize) {
+          ctx.beginPath();
+          ctx.moveTo(x, 0);
+          ctx.lineTo(x, h);
+          ctx.stroke();
+        }
+        for (let y = 0; y < h; y += gridSize) {
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(w, y);
+          ctx.stroke();
+        }
+
+        // 绘制中央广播能量动态波形
+        const ch = MOCK_CHANNELS[currentChannelIdx] || { name: 'CCTV-1' };
+        ctx.save();
+        ctx.beginPath();
+        for (let x = 0; x < w; x += 4) {
+          const wave1 = Math.sin(x * 0.02 + step * 2) * 25;
+          const wave2 = Math.cos(x * 0.04 - step) * 15;
+          const y = h * 0.5 + wave1 + wave2;
+          if (x === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 2.5;
+        ctx.shadowColor = '#38bdf8';
+        ctx.shadowBlur = 12;
+        ctx.stroke();
+        ctx.restore();
+
+        // 绘制频谱柱状图 (底部)
+        const bars = 24;
+        const barW = w / bars;
+        for (let i = 0; i < bars; i++) {
+          const barH = Math.abs(Math.sin(step * 3 + i * 0.4)) * (h * 0.28) + 8;
+          const barGrad = ctx.createLinearGradient(0, h, 0, h - barH);
+          barGrad.addColorStop(0, 'rgba(37, 99, 235, 0.6)');
+          barGrad.addColorStop(1, 'rgba(6, 182, 212, 0.8)');
+          ctx.fillStyle = barGrad;
+          ctx.fillRect(i * barW + 2, h - barH, barW - 4, barH);
+        }
+
+        // 绘制演播厅水印与时间码
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
+        ctx.font = '11px monospace';
+        const now = new Date();
+        const timecode = now.toTimeString().split(' ')[0] + '.' + String(Math.floor(now.getMilliseconds() / 100));
+        ctx.fillText(`REC LIVE [${timecode}]`, 16, h - 28);
+        ctx.fillText(`SIGNAL: DIGITAL DVB-T2 / 1080P`, w - 190, h - 28);
+
+        canvasAnimId = requestAnimationFrame(render);
+      }
+
+      if (canvasAnimId) cancelAnimationFrame(canvasAnimId);
+      canvasAnimId = requestAnimationFrame(render);
+    }
+
+    function toggleTvAudio() {
+      const video = document.getElementById('tvVideo');
+      const btn = document.getElementById('btnTvAudio');
+      if (!video) return;
+      video.muted = !video.muted;
+      if (video.muted) {
+        btn.innerText = '🔇 开启声音';
+      } else {
+        btn.innerText = '🔊 静音';
+        video.play().catch(e => {});
+      }
+    }
+
+    function toggleOsdDisplay() {
+      const center = document.getElementById('tvOsdCenter');
+      const epg = document.getElementById('tvOsdEpg');
+      isOsdVisible = !isOsdVisible;
+      center.style.opacity = isOsdVisible ? '1' : '0';
+      epg.style.opacity = isOsdVisible ? '1' : '0';
+    }
+
     function updateTvDisplay() {
       if (MOCK_CHANNELS.length === 0) return;
       const ch = MOCK_CHANNELS[currentChannelIdx];
-      const line = (ch.lines && ch.lines[currentLineIdx]) || (ch.lines && ch.lines[0]) || { name: '默认', latency: 15.0 };
+      const line = (ch.lines && ch.lines[currentLineIdx]) || (ch.lines && ch.lines[0]) || { name: '默认线路', latency: 15.0, url: '' };
 
       document.getElementById('tvChNum').innerText = ch.num;
       document.getElementById('tvChTitle').innerText = ch.name;
@@ -1551,14 +1682,85 @@ CCTV-13 新闻高清,http://111.20.10.13:8080/live/cctv13.m3u8
       document.getElementById('tvOsdInfo').innerText = `1080P 50FPS • 延迟 ${line.latency}ms`;
       document.getElementById('tvCurrentProgram').innerText = ch.epg;
       document.getElementById('tvNextProgram').innerText = ch.nextEpg;
-      document.getElementById('tvScreenBg').style.background = ch.bg;
+
+      const centerOsd = document.getElementById('tvOsdCenter');
+      const epgOsd = document.getElementById('tvOsdEpg');
+      const statusEl = document.getElementById('tvPlaybackStatus');
+      centerOsd.style.opacity = '1';
+      epgOsd.style.opacity = '1';
+      isOsdVisible = true;
 
       // 切台动态特效
       const tvFrame = document.getElementById('tvFrame');
-      tvFrame.style.filter = 'brightness(1.25)';
+      tvFrame.style.filter = 'brightness(1.35)';
       setTimeout(() => {
         tvFrame.style.filter = 'brightness(1)';
       }, 150);
+
+      // 清除旧的 OSD 淡出定时器
+      if (osdFadeTimer) clearTimeout(osdFadeTimer);
+
+      // 启动视频播放逻辑
+      const video = document.getElementById('tvVideo');
+      statusEl.innerText = '📡 正在连接实时流...';
+
+      if (currentHls) {
+        currentHls.destroy();
+        currentHls = null;
+      }
+
+      if (line.url && line.url.startsWith('http')) {
+        // 通过本地后端代理请求，绕过浏览器跨域 CORS 拦截
+        const proxyUrl = `/api/stream_proxy?url=${encodeURIComponent(line.url)}`;
+
+        if (window.Hls && Hls.isSupported()) {
+          currentHls = new Hls({
+            enableWorker: true,
+            lowLatencyMode: true,
+            maxBufferLength: 8
+          });
+
+          currentHls.loadSource(proxyUrl);
+          currentHls.attachMedia(video);
+
+          currentHls.on(Hls.Events.MANIFEST_PARSED, () => {
+            video.style.opacity = '1';
+            video.play().then(() => {
+              statusEl.innerText = '🟢 实时直播流已锁定播放';
+            }).catch(() => {
+              statusEl.innerText = '▶ 实时流就绪 (已静音播放)';
+            });
+
+            // 播放成功后，3.5秒淡出中央台标，还原本色画面
+            osdFadeTimer = setTimeout(() => {
+              centerOsd.style.opacity = '0';
+              isOsdVisible = false;
+            }, 3500);
+          });
+
+          currentHls.on(Hls.Events.ERROR, (event, data) => {
+            if (data.fatal) {
+              video.style.opacity = '0.2';
+              statusEl.innerText = '🟡 实时源响应中 (演播厅动态待机画面)';
+            }
+          });
+        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+          video.src = proxyUrl;
+          video.play().then(() => {
+            video.style.opacity = '1';
+            statusEl.innerText = '🟢 实时播放中';
+          }).catch(e => {
+            video.style.opacity = '0.2';
+            statusEl.innerText = '🟡 广播信号待机画面';
+          });
+        } else {
+          video.style.opacity = '0.2';
+          statusEl.innerText = '🟡 演播厅广播信号发射中';
+        }
+      } else {
+        video.style.opacity = '0.2';
+        statusEl.innerText = '🟡 模拟演播厅信号广播中';
+      }
     }
 
     function playChannelByIdx(idx) {
@@ -1597,7 +1799,7 @@ CCTV-13 新闻高清,http://111.20.10.13:8080/live/cctv13.m3u8
 
     function remoteConfirm() {
       if (MOCK_CHANNELS.length === 0) return;
-      alert(`📺 [电视菜单]: 当前正播放【${MOCK_CHANNELS[currentChannelIdx].name}】\n按上下键可切台，左右键可快速切换线路。`);
+      toggleOsdDisplay();
     }
 
     // 绑定物理键盘的方向键
@@ -1620,6 +1822,9 @@ CCTV-13 新闻高清,http://111.20.10.13:8080/live/cctv13.m3u8
       const subM3u = document.getElementById('subM3uField');
       if (subTxt) subTxt.value = origin + '/live.txt';
       if (subM3u) subM3u.value = origin + '/live.m3u';
+
+      // 启动动态广播视觉引擎
+      startCanvasBroadcastAnimation();
 
       loadSampleSource();
       renderResultsTable();
