@@ -1187,8 +1187,8 @@ CCTV-13 新闻高清,http://111.20.10.13:8080/live/cctv13.m3u8
     // 步骤切换
     function switchStep(step) {
       for (let i = 1; i <= 4; i++) {
-        const tab = document.getElementById(`stepTab\${i}`);
-        const sec = document.getElementById(`secStep\${i}`);
+        const tab = document.getElementById(`stepTab${i}`);
+        const sec = document.getElementById(`secStep${i}`);
         if (tab) tab.classList.toggle('active', i === step);
         if (sec) sec.classList.toggle('active', i === step);
       }
@@ -1217,7 +1217,7 @@ CCTV-13 新闻高清,http://111.20.10.13:8080/live/cctv13.m3u8
       function addLog(text) {
         const time = new Date().toTimeString().split(' ')[0];
         const div = document.createElement('div');
-        div.innerText = `[\${time}] \${text}`;
+        div.innerText = `[${time}] ${text}`;
         log.appendChild(div);
         log.scrollTop = log.scrollHeight;
       }
@@ -1283,20 +1283,20 @@ CCTV-13 新闻高清,http://111.20.10.13:8080/live/cctv13.m3u8
         const l2 = ch.lines[1];
 
         tr.innerHTML = `
-          <td><strong>\${ch.name}</strong></td>
-          <td><span class="badge-group">\${ch.group}</span></td>
+          <td><strong>${ch.name}</strong></td>
+          <td><span class="badge-group">${ch.group}</span></td>
           <td>
-            <span class="badge-latency latency-green">\${l1.latency}ms</span>
-            <span style="font-size:0.75rem; color:#94a3b8; margin-left:4px;">\${l1.name}</span>
+            <span class="badge-latency latency-green">${l1.latency}ms</span>
+            <span style="font-size:0.75rem; color:#94a3b8; margin-left:4px;">${l1.name}</span>
           </td>
           <td>
-            \${l2 ? `
-              <span class="badge-latency \${l2.latency < 40 ? 'latency-green' : 'latency-orange'}">\${l2.latency}ms</span>
-              <span style="font-size:0.75rem; color:#94a3b8; margin-left:4px;">\${l2.name}</span>
+            ${l2 ? `
+              <span class="badge-latency ${l2.latency < 40 ? 'latency-green' : 'latency-orange'}">${l2.latency}ms</span>
+              <span style="font-size:0.75rem; color:#94a3b8; margin-left:4px;">${l2.name}</span>
             ` : '<span style="color:#64748b; font-size:0.75rem;">(单极速线路)</span>'}
           </td>
           <td>
-            <button class="btn btn-secondary" style="padding:2px 8px; font-size:0.75rem;" onclick="playChannelByIdx(\${idx})">
+            <button class="btn btn-secondary" style="padding:2px 8px; font-size:0.75rem;" onclick="playChannelByIdx(${idx})">
               📺 在电视上试播
             </button>
           </td>
@@ -1355,8 +1355,8 @@ CCTV-13 新闻高清,http://111.20.10.13:8080/live/cctv13.m3u8
 
       document.getElementById('tvChNum').innerText = ch.num;
       document.getElementById('tvChTitle').innerText = ch.name;
-      document.getElementById('tvLineMeta').innerText = `\${line.name} • 延迟 \${line.latency}ms`;
-      document.getElementById('tvOsdInfo').innerText = `1080P 50FPS • 延迟 \${line.latency}ms`;
+      document.getElementById('tvLineMeta').innerText = `${line.name} • 延迟 ${line.latency}ms`;
+      document.getElementById('tvOsdInfo').innerText = `1080P 50FPS • 延迟 ${line.latency}ms`;
       document.getElementById('tvCurrentProgram').innerText = ch.epg;
       document.getElementById('tvNextProgram').innerText = ch.nextEpg;
       document.getElementById('tvScreenBg').style.background = ch.bg;
@@ -1400,7 +1400,7 @@ CCTV-13 新闻高清,http://111.20.10.13:8080/live/cctv13.m3u8
     }
 
     function remoteConfirm() {
-      alert(`📺 [电视菜单]: 当前正播放【\${MOCK_CHANNELS[currentChannelIdx].name}】\n按上下键可切台，左右键可快速切换线路。`);
+      alert(`📺 [电视菜单]: 当前正播放【${MOCK_CHANNELS[currentChannelIdx].name}】\n按上下键可切台，左右键可快速切换线路。`);
     }
 
     // 绑定物理键盘的方向键
