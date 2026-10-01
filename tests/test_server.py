@@ -140,5 +140,13 @@ CCTV-1 综合,http://test.live/cctv1.m3u8
             self.assertEqual(e.code, 400)
 
 
+    def test_video_static_delivery(self):
+        url = f"http://127.0.0.1:{TEST_PORT}/videos/cctv1.mp4"
+        req = urllib.request.Request(url, method="HEAD")
+        with urllib.request.urlopen(req) as resp:
+            self.assertEqual(resp.status, 200)
+            self.assertEqual(resp.headers.get("Content-Type"), "video/mp4")
+
+
 if __name__ == "__main__":
     unittest.main()
