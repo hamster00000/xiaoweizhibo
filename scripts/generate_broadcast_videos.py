@@ -187,6 +187,36 @@ def generate_channel_video(
     print(f"[+] 视频生成完成: {out_path} ({os.path.getsize(out_path) // 1024} KB)")
 
 
+LIVE_STREAMS = {
+    "cctv1.mp4": "http://38.75.136.137:98/gslb/dsdqbv/cctv1hd.m3u8?auth=test20251009",
+    "cctv5.mp4": "http://38.75.136.137:98/gslb/dsdqpub/cctv5p.m3u8?auth=testpub",
+    "cctv13.mp4": "http://120.76.248.139/live/bfgd/4200000067.m3u8",
+    "hunan.mp4": "https://txmov2.a.kwimgs.com/bs3/video-hls/5199687338554291078_hlsb.m3u8",
+    "zhejiang.mp4": "http://ali-m-l.cztv.com/channels/lantian/channel01/1080p.m3u8",
+}
+
+
+def capture_real_stream(url: str, out_path: str, duration: float = 8.0) -> bool:
+    print(f"[*] 尝试从真实直播源获取节目电视画面: {url} -> {out_path} ...")
+    cmd = [
+        "ffmpeg", "-y",
+        "-i", url,
+        "-t", str(duration),
+        "-c:v", "libx264",
+        "-preset", "ultrafast",
+        "-c:a", "aac",
+        out_path
+    ]
+    try:
+        res = subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, timeout=20)
+        if res.returncode == 0 and os.path.exists(out_path) and os.path.getsize(out_path) > 10000:
+            print(f"[+] 成功录制真实电视频道画面: {out_path} ({os.path.getsize(out_path) // 1024} KB)")
+            return True
+    except Exception as e:
+        print(f"[!] 真实直播流录制失败: {e}，将采用备用动态广播画面")
+    return False
+
+
 def main():
     clips = [
         (
@@ -227,6 +257,11 @@ def main():
     ]
 
     for fname, title, prog, ticker, theme in clips:
+        out_path = os.path.join(OUTPUT_DIR, fname)
+        if fname in LIVE_STREAMS:
+            if capture_real_stream(LIVE_STREAMS[fname], out_path):
+                continue
+
         generate_channel_video(
             filename=fname,
             channel_title=title,
