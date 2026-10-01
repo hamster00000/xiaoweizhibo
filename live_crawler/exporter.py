@@ -6,7 +6,7 @@ from live_crawler.fetcher import ChannelItem
 
 
 class StreamExporter:
-    """直播源清洗排序与多格式输出生成器"""
+    """直播源清洗排序与多格式输出生成器 (契合技术设计 4.4 与 5.2 规范)"""
 
     # 央视排序权重
     CCTV_ORDER = [
@@ -25,7 +25,7 @@ class StreamExporter:
         "陕西卫视", "贵州卫视", "云南卫视", "广西卫视", "海南卫视"
     ]
 
-    def __init__(self, max_lines_per_channel: int = 4):
+    def __init__(self, max_lines_per_channel: int = 3):
         self.max_lines_per_channel = max_lines_per_channel
 
     def deduplicate_and_rank(self, items: List[ChannelItem]) -> Dict[str, Dict[str, List[ChannelItem]]]:
@@ -113,8 +113,10 @@ class StreamExporter:
             for ch_name, channel_lines in sorted_channels:
                 for idx, line in enumerate(channel_lines):
                     display_name = ch_name if len(channel_lines) == 1 else f"{ch_name} (线路{idx+1})"
-                    logo_attr = f' tvg-logo="{line.logo}"' if line.logo else ""
-                    lines.append(f'#EXTINF:-1 tvg-name="{ch_name}"{logo_attr} group-title="{group}",{display_name}')
+                    logo_val = line.tvg_logo or getattr(line, "logo", "")
+                    logo_attr = f' tvg-logo="{logo_val}"' if logo_val else ""
+                    id_attr = f' tvg-id="{line.tvg_id}"' if line.tvg_id else ""
+                    lines.append(f'#EXTINF:-1{id_attr} tvg-name="{ch_name}"{logo_attr} group-title="{group}",{display_name}')
                     lines.append(line.url)
 
         return "\n".join(lines) + "\n"
@@ -126,17 +128,28 @@ class StreamExporter:
         xiaowei_filename: str = "live_xiaowei.txt",
         m3u_filename: str = "live.m3u"
     ) -> Tuple[str, str]:
-        """将两种格式写入目标输出目录"""
+        """将两种格式写入目标输出目录，采用原子写入 (先 .tmp 再 os.replace) 保证读写无冲突"""
         os.makedirs(output_dir, exist_ok=True)
         txt_path = os.path.join(output_dir, xiaowei_filename)
         m3u_path = os.path.join(output_dir, m3u_filename)
 
+        txt_tmp = txt_path + ".tmp"
+        m3u_tmp = m3u_path + ".tmp"
+
         txt_content = self.export_xiaowei_txt(grouped_channels)
-        with open(txt_path, "w", encoding="utf-8") as f:
+        with open(txt_tmp, "w", encoding="utf-8") as f:
             f.write(txt_content)
+            f.flush()
+            os.fsync(f.fileno())
 
         m3u_content = self.export_standard_m3u(grouped_channels)
-        with open(m3u_path, "w", encoding="utf-8") as f:
+        with open(m3u_tmp, "w", encoding="utf-8") as f:
             f.write(m3u_content)
+            f.flush()
+            os.fsync(f.fileno())
+
+        # 原子重命名
+        os.replace(txt_tmp, txt_path)
+        os.replace(m3u_tmp, m3u_path)
 
         return txt_path, m3u_path

@@ -57,12 +57,20 @@
     "测试",
     "广告",
     "体验",
-    "专享"
+    "专享",
+    "专卖",
+    "优惠",
+    "热卖",
+    "理财",
+    "彩票",
+    "聚鲨"
   ],
   "output": {
     "dir": "output",
     "xiaowei_txt": "live_xiaowei.txt",
     "standard_m3u": "live.m3u",
-    "max_lines_per_channel": 4
-  }
+    "max_lines_per_channel": 3
+  },
+  "min_valid_channels": 1,
+  "auto_refresh_hours": 12
 }

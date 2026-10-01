@@ -6,7 +6,7 @@ from live_crawler.fetcher import ChannelItem
 
 
 class StreamChecker:
-    """基于异步并发的流可用性与响应延迟探测器"""
+    """基于异步并发的流可用性与响应延迟探测器 (契合技术设计 4.3 规范)"""
 
     def __init__(
         self,
@@ -19,19 +19,37 @@ class StreamChecker:
         self.user_agent = user_agent
 
     async def check_single(self, client: httpx.AsyncClient, item: ChannelItem) -> ChannelItem:
-        """检测单个频道的连通性与首包延迟"""
+        """检测单个频道的连通性与首包延迟 (第一步 HEAD 优先探测，第二步 GET Range 降级)"""
         headers = {
             "User-Agent": self.user_agent,
             "Accept": "*/*",
-            "Range": "bytes=0-1024"  # 仅请求前 1KB 数据以快速判定
         }
         start_time = time.perf_counter()
 
+        # 第一步：优先尝试 HTTP HEAD 请求获取响应头
         try:
-            # 采用 GET 请求以兼容不支持 HEAD 或针对 HEAD 返回 405/403 的流媒体服务器
-            async with client.stream("GET", item.url, headers=headers, timeout=self.timeout) as resp:
-                if 200 <= resp.status_code < 400 or resp.status_code == 206:
-                    # 尝试读取首个数据块确认非假握手
+            if hasattr(client, "head"):
+                head_call = client.head(item.url, headers=headers, timeout=self.timeout)
+                if asyncio.iscoroutine(head_call):
+                    resp = await head_call
+                    if resp.status_code in (200, 206, 301, 302, 307, 308):
+                        latency = (time.perf_counter() - start_time) * 1000.0
+                        item.latency_ms = round(latency, 2)
+                        item.is_valid = True
+                        return item
+        except Exception:
+            pass
+
+        # 第二步：针对屏蔽 HEAD 的 CDN，降级为 Range: bytes=0-1024 的分片 GET 请求
+        get_headers = {
+            "User-Agent": self.user_agent,
+            "Accept": "*/*",
+            "Range": "bytes=0-1024"
+        }
+        start_time = time.perf_counter()
+        try:
+            async with client.stream("GET", item.url, headers=get_headers, timeout=self.timeout) as resp:
+                if (200 <= resp.status_code < 400) or resp.status_code == 206:
                     async for _ in resp.aiter_bytes():
                         break
                     latency = (time.perf_counter() - start_time) * 1000.0

@@ -50,7 +50,7 @@ class TestStreamExporter(unittest.TestCase):
 
     def test_export_standard_m3u(self):
         items = [
-            ChannelItem(raw_name="CCTV-1", name="CCTV-1", url="http://cctv1", group="央视频道", is_valid=True, latency_ms=10.0, logo="http://logo.png"),
+            ChannelItem(raw_name="CCTV-1", name="CCTV-1", url="http://cctv1", group="央视频道", is_valid=True, latency_ms=10.0, tvg_id="cctv1", tvg_logo="http://logo.png"),
         ]
         grouped = self.exporter.deduplicate_and_rank(items)
         m3u = self.exporter.export_standard_m3u(grouped)
@@ -58,9 +58,10 @@ class TestStreamExporter(unittest.TestCase):
         self.assertTrue(m3u.startswith("#EXTM3U"))
         self.assertIn('group-title="央视频道"', m3u)
         self.assertIn('tvg-logo="http://logo.png"', m3u)
+        self.assertIn('tvg-id="cctv1"', m3u)
         self.assertIn("http://cctv1", m3u)
 
-    def test_save_to_files(self):
+    def test_save_to_files_atomic(self):
         items = [
             ChannelItem(raw_name="CCTV-1", name="CCTV-1", url="http://cctv1", group="央视频道", is_valid=True, latency_ms=10.0),
         ]
@@ -74,6 +75,10 @@ class TestStreamExporter(unittest.TestCase):
 
         self.assertTrue(os.path.exists(txt_path))
         self.assertTrue(os.path.exists(m3u_path))
+        # 临时文件应该已被原子替换，不再残留
+        self.assertFalse(os.path.exists(txt_path + ".tmp"))
+        self.assertFalse(os.path.exists(m3u_path + ".tmp"))
+
         with open(txt_path, "r", encoding="utf-8") as f:
             content = f.read()
             self.assertIn("央视频道,#genre#", content)

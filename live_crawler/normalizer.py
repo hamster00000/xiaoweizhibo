@@ -12,6 +12,7 @@ class ChannelNormalizer:
         "4": "CCTV-4",
         "5": "CCTV-5",
         "5+": "CCTV-5+",
+        "5PLUS": "CCTV-5+",
         "6": "CCTV-6",
         "7": "CCTV-7",
         "8": "CCTV-8",
@@ -39,13 +40,19 @@ class ChannelNormalizer:
         r"[_\-\s]+$",
     ]
 
+    DEFAULT_AD_KEYWORDS = [
+        "购物", "特惠", "商城", "导购", "测试", "广告", "体验", "专享",
+        "专卖", "优惠", "热卖", "理财", "彩票", "聚鲨"
+    ]
+
     def __init__(self, channel_groups: Optional[List[Dict]] = None, ad_keywords: Optional[List[str]] = None):
         self.channel_groups = channel_groups or []
-        self.ad_keywords = [kw.lower() for kw in (ad_keywords or ["购物", "特惠", "商城", "导购", "测试", "广告"])]
+        kws = ad_keywords if ad_keywords is not None else self.DEFAULT_AD_KEYWORDS
+        self.ad_keywords = [kw.lower() for kw in kws]
 
     def is_ad_channel(self, name: str) -> bool:
-        """判断是否属于广告或推广频道"""
-        if not name:
+        """判断是否属于广告或推广频道（零容忍拦截）"""
+        if not name or not name.strip():
             return True
         name_lower = name.lower()
         for kw in self.ad_keywords:
@@ -60,10 +67,10 @@ class ChannelNormalizer:
 
         clean_name = raw_name.strip()
 
-        # 1. 匹配 CCTV 系列 (例如: cctv-1, CCTV1 高清, CCTV 5+ 体育赛事, CCTV-4K)
-        cctv_match = re.search(r"cctv[-_\s]*(4k|8k|[0-9]{1,2}\+|[0-9]{1,2})", clean_name, re.IGNORECASE)
+        # 1. 匹配 CCTV 系列 (例如: cctv-1, CCTV1 高清, CCTV 5+ 体育赛事, CCTV-4K, CCTV5PLUS)
+        cctv_match = re.search(r"cctv[-_\s]*(4k|8k|[0-9]{1,2}(?:\s*plus|\+)?|[0-9]{1,2})", clean_name, re.IGNORECASE)
         if cctv_match:
-            cctv_id = cctv_match.group(1).upper()
+            cctv_id = cctv_match.group(1).upper().replace(" ", "").replace("PLUS", "+")
             if cctv_id in self.CCTV_NAME_MAP:
                 return self.CCTV_NAME_MAP[cctv_id]
             return f"CCTV-{cctv_id}"
@@ -112,4 +119,3 @@ class ChannelNormalizer:
         if not raw or raw in ["其他", "其它", "其他频道"]:
             return self.match_group(normalized_name)
         return raw
-

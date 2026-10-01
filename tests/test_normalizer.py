@@ -18,6 +18,8 @@ class TestChannelNormalizer(unittest.TestCase):
             "CCTV-1 综合": "CCTV-1",
             "CCTV1 高清": "CCTV-1",
             "cctv 5+ 体育赛事": "CCTV-5+",
+            "CCTV5plus": "CCTV-5+",
+            "cctv-5 plus": "CCTV-5+",
             "CCTV-13 新闻": "CCTV-13",
             "CCTV-4K 超高清": "CCTV-4K",
             "CCTV-8K": "CCTV-8K"
@@ -35,12 +37,25 @@ class TestChannelNormalizer(unittest.TestCase):
         for raw, expected in cases.items():
             self.assertEqual(self.normalizer.normalize_name(raw), expected)
 
+    def test_normalize_cgtn(self):
+        self.assertEqual(self.normalizer.normalize_name("cgtn news"), "CGTN-NEWS")
+        self.assertEqual(self.normalizer.normalize_name("CGTN"), "CGTN")
+
     def test_is_ad_channel(self):
         self.assertTrue(self.normalizer.is_ad_channel("电视购物"))
         self.assertTrue(self.normalizer.is_ad_channel("特惠商城专享"))
         self.assertTrue(self.normalizer.is_ad_channel("内部测试台"))
+        self.assertTrue(self.normalizer.is_ad_channel(""))
+        self.assertTrue(self.normalizer.is_ad_channel("   "))
         self.assertFalse(self.normalizer.is_ad_channel("CCTV-1"))
         self.assertFalse(self.normalizer.is_ad_channel("湖南卫视"))
+
+    def test_default_ad_keywords(self):
+        default_norm = ChannelNormalizer()
+        self.assertTrue(default_norm.is_ad_channel("天天特惠商城"))
+        self.assertTrue(default_norm.is_ad_channel("珠宝翡翠品牌导购"))
+        self.assertTrue(default_norm.is_ad_channel("专享体验台"))
+        self.assertFalse(default_norm.is_ad_channel("CCTV-1 综合"))
 
     def test_match_group(self):
         self.assertEqual(self.normalizer.match_group("CCTV-1"), "央视频道")

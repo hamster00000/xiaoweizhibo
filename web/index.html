@@ -757,8 +757,12 @@
       </div>
     </div>
     <div class="nav-actions">
+      <span id="serverStatusPill" style="font-size:0.78rem; color:#94a3b8; display:flex; align-items:center; gap:6px; background:rgba(0,0,0,0.3); padding:5px 12px; border-radius:16px; border:1px solid var(--border);">
+        <span id="statusDot" style="color:#10b981;">●</span> <span id="statusText">系统就绪</span>
+      </span>
       <button class="btn btn-secondary" onclick="loadSampleSource()">📥 载入典型脏源样例</button>
       <button class="btn btn-primary" id="btnRunWorkflow" onclick="startWorkflowSim()">⚡ 启动全流程模拟</button>
+      <button class="btn btn-success" id="btnRefreshServer" onclick="triggerServerRefresh()">🔄 后台测速更新</button>
     </div>
   </header>
 
@@ -971,13 +975,20 @@
             <p style="font-size:0.78rem; color:var(--text-muted);">
               在小薇直播【网络自定义】中填入固定订阅直链，后台每天自动更新，电视端永不失效：
             </p>
-            <input type="text" class="sub-url-input" id="subUrlField" value="http://192.168.1.188:8088/live.txt" readonly>
-            <div style="display:flex; gap:8px;">
+            <div style="display:flex; flex-direction:column; gap:6px;">
+              <label style="font-size:0.75rem; color:#94a3b8;">📺 小薇直播专属直链 (/live.txt):</label>
+              <input type="text" class="sub-url-input" id="subUrlField" value="http://localhost:8088/live.txt" readonly>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:6px;">
+              <label style="font-size:0.75rem; color:#94a3b8;">📱 通用 M3U 播放列表 (/live.m3u):</label>
+              <input type="text" class="sub-url-input" id="subM3uField" value="http://localhost:8088/live.m3u" readonly>
+            </div>
+            <div style="display:flex; gap:8px; margin-top:4px;">
               <button class="btn btn-primary" style="flex:1; justify-content:center;" onclick="copySubUrl()">
-                📋 复制订阅地址
+                📋 复制小薇源地址
               </button>
-              <button class="btn btn-secondary" onclick="mockScanQr()">
-                📱 手机扫码推送到电视
+              <button class="btn btn-secondary" style="flex:1; justify-content:center;" onclick="copyM3uUrl()">
+                📋 复制 M3U 地址
               </button>
             </div>
           </div>
@@ -986,23 +997,39 @@
           <div class="delivery-box">
             <strong style="font-size:0.9rem; color:#fff;">💾 方式二：离线 U 盘 / 局域网文件</strong>
             <p style="font-size:0.78rem; color:var(--text-muted);">
-              导出完全符合小薇直播 <code>#genre#</code> 分组规范的纯净 TXT 文件：
+              导出完全符合小薇直播 <code>#genre#</code> 分组规范或通用标准播放器的离线文件：
             </p>
-            <div style="display:flex; gap:8px; margin-top:auto;">
-              <button class="btn btn-secondary" style="flex:1; justify-content:center;" onclick="copyTxtContent()">
-                📋 复制纯文本
-              </button>
-              <button class="btn btn-success" style="flex:1; justify-content:center;" onclick="downloadPureTxt()">
-                ⬇ 下载 live_xiaowei.txt
-              </button>
+            <div style="display:flex; flex-direction:column; gap:8px; margin-top:auto;">
+              <div style="display:flex; gap:8px;">
+                <button class="btn btn-secondary" style="flex:1; justify-content:center;" onclick="copyTxtContent()">
+                  📋 复制纯文本
+                </button>
+                <button class="btn btn-success" style="flex:1; justify-content:center;" onclick="downloadPureTxt()">
+                  ⬇ 下载 live_xiaowei.txt
+                </button>
+              </div>
+              <div style="display:flex; gap:8px;">
+                <button class="btn btn-secondary" style="flex:1; justify-content:center;" onclick="copyM3uContent()">
+                  📋 复制 M3U 文本
+                </button>
+                <button class="btn btn-primary" style="flex:1; justify-content:center;" onclick="downloadM3uFile()">
+                  ⬇ 下载 live.m3u
+                </button>
+              </div>
             </div>
           </div>
         </div>
 
         <div>
-          <label style="font-size:0.85rem; font-weight:600; margin-bottom:6px; display:block;">
-            小薇直播格式文件内容预览 (已按央视、卫视规范排序)：
-          </label>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <label style="font-size:0.85rem; font-weight:600;">
+              直播源文件内容预览 (已按央视、卫视规范排序)：
+            </label>
+            <div style="display:flex; gap:6px;">
+              <button class="btn btn-secondary" style="padding:2px 8px; font-size:0.75rem;" onclick="showExportTab('txt')">小薇 TXT</button>
+              <button class="btn btn-secondary" style="padding:2px 8px; font-size:0.75rem;" onclick="showExportTab('m3u')">标准 M3U</button>
+            </div>
+          </div>
           <textarea id="exportPreviewArea" class="raw-textarea" style="height: 140px;" readonly></textarea>
         </div>
 
@@ -1201,8 +1228,14 @@ CCTV-13 新闻高清,http://111.20.10.13:8080/live/cctv13.m3u8
       }
     }
 
-    // 开始全流程处理动效模拟
-    function startWorkflowSim() {
+    let currentExportTab = 'txt';
+    let currentExportData = {
+      txt: '',
+      m3u: ''
+    };
+
+    // 开始全流程处理动效与实际后端数据同步
+    async function startWorkflowSim() {
       isProcessing = true;
       switchStep(2);
       const title = document.getElementById('progressStepTitle');
@@ -1225,38 +1258,121 @@ CCTV-13 新闻高清,http://111.20.10.13:8080/live/cctv13.m3u8
       bar.style.width = '0%';
       pct.innerText = '0%';
 
-      // 阶段 1: 解析
-      setTimeout(() => {
-        bar.style.width = '25%';
-        pct.innerText = '25%';
-        title.innerText = '阶段 1/4: 抓取并解析源清单...';
-        addLog('已成功抓取原始源列表，解析出 14 个频道条目。');
-      }, 400);
+      const rawInput = document.getElementById('rawSourceText').value || SAMPLE_DIRTY_DATA;
 
-      // 阶段 2: 过滤广告
+      // 阶段 1: 解析
+      bar.style.width = '25%';
+      pct.innerText = '25%';
+      title.innerText = '阶段 1/4: 抓取并解析源清单...';
+      addLog('已成功抓取原始源列表，解析待清洗条目...');
+
+      try {
+        const resp = await fetch('/api/process', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ raw_text: rawInput, max_lines: 2 })
+        });
+
+        if (resp.ok) {
+          const res = await resp.json();
+
+          // 阶段 2: 过滤
+          await new Promise(r => setTimeout(r, 600));
+          bar.style.width = '55%';
+          pct.innerText = '55%';
+          title.innerText = '阶段 2/4: 广告拦截与频道名归一...';
+          addLog(`【引擎清洗】原始输入解析出 ${res.total_raw} 条候选，已自动过滤广告台及杂乱后缀`);
+
+          // 阶段 3: 测速
+          await new Promise(r => setTimeout(r, 600));
+          bar.style.width = '85%';
+          pct.innerText = '85%';
+          title.innerText = '阶段 3/4: 并发测速与死链探测...';
+          addLog('并发执行流媒体连通性与首包 RTT 延迟检测...');
+
+          // 阶段 4: 完成
+          await new Promise(r => setTimeout(r, 600));
+          bar.style.width = '100%';
+          pct.innerText = '100%';
+          title.innerText = '阶段 4/4: 优选线路收敛完成！';
+          addLog('已保留每个频道最优线路，双轨规范格式就绪！');
+
+          currentExportData.txt = res.xiaowei_txt;
+          currentExportData.m3u = res.m3u_text;
+
+          // 转换后台频道到电视前台播放列表
+          if (res.channels && res.channels.length > 0) {
+            const chMap = {};
+            res.channels.forEach(c => {
+              if (!chMap[c.name]) {
+                chMap[c.name] = {
+                  name: c.name,
+                  group: c.group,
+                  lines: []
+                };
+              }
+              chMap[c.name].lines.push({
+                name: `线路 ${chMap[c.name].lines.length + 1}`,
+                latency: c.latency_ms || 20.0,
+                url: c.url
+              });
+            });
+
+            const bgs = [
+              "linear-gradient(135deg, #0f2027, #203a43, #2c5364)",
+              "linear-gradient(135deg, #1f4037, #99f2c8)",
+              "linear-gradient(135deg, #141e30, #243b55)",
+              "linear-gradient(135deg, #e65c00, #f9d423)",
+              "linear-gradient(135deg, #2b5876, #4e4376)"
+            ];
+
+            MOCK_CHANNELS.length = 0;
+            let idx = 1;
+            for (const [name, ch] of Object.entries(chMap)) {
+              MOCK_CHANNELS.push({
+                num: String(idx).padStart(2, '0'),
+                name: ch.name,
+                group: ch.group,
+                epg: `正在播出：${ch.name} 精彩节目`,
+                nextEpg: `稍后播放：下一精彩时段`,
+                bg: bgs[(idx - 1) % bgs.length],
+                lines: ch.lines
+              });
+              idx++;
+            }
+          }
+
+          document.getElementById('statRawCount').innerText = res.total_raw;
+          document.getElementById('statFinalCount').innerText = MOCK_CHANNELS.length;
+
+          renderResultsTable();
+          renderXiaoWeiExport();
+          updateTvDisplay();
+          nextBtn.disabled = false;
+          isProcessing = false;
+          return;
+        }
+      } catch (e) {
+        // 网络请求不可达时走本地回退
+        console.warn('API /api/process 不可用，切换至本地动效模拟模式', e);
+      }
+
+      // 回退降级流程动效
       setTimeout(() => {
         bar.style.width = '55%';
         pct.innerText = '55%';
         title.innerText = '阶段 2/4: 广告拦截与频道名归一...';
         addLog('【拦截】命中广告关键词：“天天特惠电视购物” -> 已剔除');
-        addLog('【拦截】命中广告关键词：“家庭名品专享商城” -> 已剔除');
-        addLog('【拦截】命中广告关键词：“珠宝翡翠品牌导购” -> 已剔除');
-        addLog('【拦截】命中广告关键词：“内部测试专享体验台” -> 已剔除');
         addLog('【归一】合并别名: CCTV1 高清, CCTV-1 综合 -> 标准台名 CCTV-1');
-      }, 1000);
+      }, 700);
 
-      // 阶段 3: 并发测速
       setTimeout(() => {
         bar.style.width = '85%';
         pct.innerText = '85%';
         title.innerText = '阶段 3/4: 并发测速与死链探测...';
-        addLog('并发探测 10 条视频流... 超时阈值: 3000ms');
         addLog('探测: CCTV-1 (线路2) -> 响应 12.8ms [极速]');
-        addLog('探测: CCTV-1 (线路3) -> 响应超时 > 3000ms [已判定死链淘汰]');
-        addLog('探测: 东方卫视 (慢速) -> 连接断开 502 [已判定死链淘汰]');
-      }, 1600);
+      }, 1400);
 
-      // 阶段 4: 优选截断与生成
       setTimeout(() => {
         bar.style.width = '100%';
         pct.innerText = '100%';
@@ -1264,12 +1380,9 @@ CCTV-13 新闻高清,http://111.20.10.13:8080/live/cctv13.m3u8
         addLog('已保留每个频道最优 Top 2 线路，清洗完成率 100%！');
         nextBtn.disabled = false;
         isProcessing = false;
-
-        // 填充结果表格
         renderResultsTable();
-        // 填充小薇文本
         renderXiaoWeiExport();
-      }, 2200);
+      }, 2000);
     }
 
     // 渲染结果看板表格
@@ -1279,7 +1392,7 @@ CCTV-13 新闻高清,http://111.20.10.13:8080/live/cctv13.m3u8
 
       MOCK_CHANNELS.forEach((ch, idx) => {
         const tr = document.createElement('tr');
-        const l1 = ch.lines[0];
+        const l1 = ch.lines[0] || { name: '默认', latency: 15.0 };
         const l2 = ch.lines[1];
 
         tr.innerHTML = `
@@ -1307,40 +1420,66 @@ CCTV-13 新闻高清,http://111.20.10.13:8080/live/cctv13.m3u8
 
     // 生成并渲染导出预览
     function renderXiaoWeiExport() {
-      let txt = "央视频道,#genre#\n";
-      txt += "CCTV-1,http://111.20.10.2:8080/live/cctv1_line2.m3u8\n";
-      txt += "CCTV-1,http://111.20.10.1:8080/live/cctv1_line1.m3u8\n";
-      txt += "CCTV-5+,http://111.20.10.5:8080/live/cctv5plus.m3u8\n";
-      txt += "CCTV-13,http://111.20.10.13:8080/live/cctv13.m3u8\n\n";
-      txt += "卫视频道,#genre#\n";
-      txt += "湖南卫视,http://222.30.10.2:8080/live/hunan_line2.m3u8\n";
-      txt += "湖南卫视,http://222.30.10.1:8080/live/hunan_line1.m3u8\n";
-      txt += "浙江卫视,http://222.30.10.3:8080/live/zhejiang.m3u8";
+      if (!currentExportData.txt) {
+        let txt = "央视频道,#genre#\n";
+        txt += "CCTV-1,http://111.20.10.2:8080/live/cctv1_line2.m3u8\n";
+        txt += "CCTV-1,http://111.20.10.1:8080/live/cctv1_line1.m3u8\n";
+        txt += "CCTV-5+,http://111.20.10.5:8080/live/cctv5plus.m3u8\n";
+        txt += "CCTV-13,http://111.20.10.13:8080/live/cctv13.m3u8\n\n";
+        txt += "卫视频道,#genre#\n";
+        txt += "湖南卫视,http://222.30.10.2:8080/live/hunan_line2.m3u8\n";
+        txt += "湖南卫视,http://222.30.10.1:8080/live/hunan_line1.m3u8\n";
+        txt += "浙江卫视,http://222.30.10.3:8080/live/zhejiang.m3u8\n";
+        currentExportData.txt = txt;
+      }
+      showExportTab(currentExportTab);
+    }
 
-      document.getElementById('exportPreviewArea').value = txt;
+    function showExportTab(type) {
+      currentExportTab = type;
+      const area = document.getElementById('exportPreviewArea');
+      if (type === 'm3u') {
+        area.value = currentExportData.m3u || `#EXTM3U\n#EXTINF:-1 tvg-name="CCTV-1" group-title="央视频道",CCTV-1\nhttp://111.20.10.2:8080/live/cctv1_line2.m3u8\n`;
+      } else {
+        area.value = currentExportData.txt;
+      }
     }
 
     // 复制与下载交互
     function copySubUrl() {
       const url = document.getElementById('subUrlField').value;
       navigator.clipboard.writeText(url).then(() => {
-        alert("✅ 订阅地址已成功复制！\n可在小薇直播网络自定义源直接粘贴使用。");
+        alert("✅ 小薇直播订阅地址已成功复制！\n可在小薇直播网络自定义源直接粘贴使用。");
+      });
+    }
+
+    function copyM3uUrl() {
+      const url = document.getElementById('subM3uField').value;
+      navigator.clipboard.writeText(url).then(() => {
+        alert("✅ 标准 M3U 地址已成功复制！\n可用于 TiviMate, Kodi, VLC 等播放器订阅。");
       });
     }
 
     function mockScanQr() {
-      alert("📱 [模拟扫码推送]:\n已模拟将订阅地址推送至局域网电视盒 (IP: 192.168.1.105:8080)，电视端小薇直播已成功无感更新！");
+      alert("📱 [模拟扫码推送]:\n已模拟将订阅地址推送至局域网电视盒，电视端小薇直播已成功无感更新！");
     }
 
     function copyTxtContent() {
-      const txt = document.getElementById('exportPreviewArea').value;
+      const txt = currentExportData.txt || document.getElementById('exportPreviewArea').value;
       navigator.clipboard.writeText(txt).then(() => {
         alert("✅ 小薇直播专用文本格式已复制到剪切板！");
       });
     }
 
+    function copyM3uContent() {
+      const m3u = currentExportData.m3u || document.getElementById('exportPreviewArea').value;
+      navigator.clipboard.writeText(m3u).then(() => {
+        alert("✅ 标准 M3U 播放列表内容已复制到剪切板！");
+      });
+    }
+
     function downloadPureTxt() {
-      const txt = document.getElementById('exportPreviewArea').value;
+      const txt = currentExportData.txt || document.getElementById('exportPreviewArea').value;
       const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
@@ -1348,10 +1487,63 @@ CCTV-13 新闻高清,http://111.20.10.13:8080/live/cctv13.m3u8
       a.click();
     }
 
+    function downloadM3uFile() {
+      const m3u = currentExportData.m3u || document.getElementById('exportPreviewArea').value;
+      const blob = new Blob([m3u], { type: 'application/x-mpegurl;charset=utf-8' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'live.m3u';
+      a.click();
+    }
+
+    // 后台状态与即时刷新
+    async function fetchSystemStatus() {
+      try {
+        const resp = await fetch('/api/status');
+        if (resp.ok) {
+          const s = await resp.json();
+          const dot = document.getElementById('statusDot');
+          const text = document.getElementById('statusText');
+
+          if (s.is_refreshing) {
+            dot.style.color = '#f59e0b';
+            text.innerText = '后台测速更新中...';
+          } else if (s.status === 'ok') {
+            dot.style.color = '#10b981';
+            text.innerText = `在线 (已收录 ${s.channels_count || 0} 频道 / 延迟 ${s.avg_latency_ms || 0}ms)`;
+          } else {
+            dot.style.color = '#38bdf8';
+            text.innerText = '服务在线 (就绪)';
+          }
+        }
+      } catch (e) {
+        // static standalone preview
+      }
+    }
+
+    async function triggerServerRefresh() {
+      const btn = document.getElementById('btnRefreshServer');
+      btn.disabled = true;
+      btn.innerText = '⏳ 任务提交中...';
+
+      try {
+        const resp = await fetch('/api/refresh', { method: 'POST' });
+        const res = await resp.json();
+        alert(`🔔 ${res.message || '后台刷新任务已触发！'}`);
+        fetchSystemStatus();
+      } catch (err) {
+        alert(`[!] 无法连接到本地交付服务: ${err.message}`);
+      } finally {
+        btn.disabled = false;
+        btn.innerText = '🔄 后台测速更新';
+      }
+    }
+
     // 电视大屏与遥控交互逻辑
     function updateTvDisplay() {
+      if (MOCK_CHANNELS.length === 0) return;
       const ch = MOCK_CHANNELS[currentChannelIdx];
-      const line = ch.lines[currentLineIdx] || ch.lines[0];
+      const line = (ch.lines && ch.lines[currentLineIdx]) || (ch.lines && ch.lines[0]) || { name: '默认', latency: 15.0 };
 
       document.getElementById('tvChNum').innerText = ch.num;
       document.getElementById('tvChTitle').innerText = ch.name;
@@ -1376,30 +1568,35 @@ CCTV-13 新闻高清,http://111.20.10.13:8080/live/cctv13.m3u8
     }
 
     function remoteNextChannel() {
+      if (MOCK_CHANNELS.length === 0) return;
       currentChannelIdx = (currentChannelIdx + 1) % MOCK_CHANNELS.length;
       currentLineIdx = 0;
       updateTvDisplay();
     }
 
     function remotePrevChannel() {
+      if (MOCK_CHANNELS.length === 0) return;
       currentChannelIdx = (currentChannelIdx - 1 + MOCK_CHANNELS.length) % MOCK_CHANNELS.length;
       currentLineIdx = 0;
       updateTvDisplay();
     }
 
     function remoteNextLine() {
+      if (MOCK_CHANNELS.length === 0) return;
       const ch = MOCK_CHANNELS[currentChannelIdx];
       currentLineIdx = (currentLineIdx + 1) % ch.lines.length;
       updateTvDisplay();
     }
 
     function remotePrevLine() {
+      if (MOCK_CHANNELS.length === 0) return;
       const ch = MOCK_CHANNELS[currentChannelIdx];
       currentLineIdx = (currentLineIdx - 1 + ch.lines.length) % ch.lines.length;
       updateTvDisplay();
     }
 
     function remoteConfirm() {
+      if (MOCK_CHANNELS.length === 0) return;
       alert(`📺 [电视菜单]: 当前正播放【${MOCK_CHANNELS[currentChannelIdx].name}】\n按上下键可切台，左右键可快速切换线路。`);
     }
 
@@ -1417,10 +1614,21 @@ CCTV-13 新闻高清,http://111.20.10.13:8080/live/cctv13.m3u8
 
     // 初始化
     window.onload = () => {
+      // 动态更新订阅 URL 字段
+      const origin = window.location.origin || 'http://localhost:8088';
+      const subTxt = document.getElementById('subUrlField');
+      const subM3u = document.getElementById('subM3uField');
+      if (subTxt) subTxt.value = origin + '/live.txt';
+      if (subM3u) subM3u.value = origin + '/live.m3u';
+
       loadSampleSource();
       renderResultsTable();
       renderXiaoWeiExport();
       updateTvDisplay();
+      fetchSystemStatus();
+
+      // 每 15 秒轮询一次状态
+      setInterval(fetchSystemStatus, 15000);
     };
   </script>
 </body>
