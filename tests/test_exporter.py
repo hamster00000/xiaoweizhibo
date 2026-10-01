@@ -96,13 +96,22 @@ class TestStreamExporter(unittest.TestCase):
 
         self.assertTrue(os.path.exists(txt_path))
         self.assertTrue(os.path.exists(m3u_path))
+        best_txt = os.path.join(self.test_dir, "live_best.txt")
+        best_m3u = os.path.join(self.test_dir, "live_best.m3u")
+        self.assertTrue(os.path.exists(best_txt), "live_best.txt 应自动生成")
+        self.assertTrue(os.path.exists(best_m3u), "live_best.m3u 应自动生成")
         # 临时文件应该已被原子替换，不再残留
         self.assertFalse(os.path.exists(txt_path + ".tmp"))
         self.assertFalse(os.path.exists(m3u_path + ".tmp"))
+        self.assertFalse(os.path.exists(best_txt + ".tmp"))
 
         with open(txt_path, "r", encoding="utf-8") as f:
             content = f.read()
             self.assertIn("央视频道,#genre#", content)
+
+        with open(best_txt, "r", encoding="utf-8") as f:
+            best_content = f.read()
+            self.assertIn("CCTV-1,http://cctv1", best_content)
 
 
 if __name__ == "__main__":

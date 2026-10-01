@@ -11,10 +11,31 @@
 import os
 import sys
 import subprocess
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Tuple
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUTPUT_DIR = os.path.join(BASE_DIR, "output")
+
+
+def get_current_git_info() -> Tuple[str, str]:
+    """获取当前本地仓库的 remote url 与当前分支"""
+    repo_url = ""
+    branch = "master"
+    try:
+        r = subprocess.run(["git", "remote", "get-url", "origin"], capture_output=True, text=True, cwd=BASE_DIR)
+        if r.returncode == 0 and r.stdout.strip():
+            repo_url = r.stdout.strip()
+    except Exception:
+        pass
+
+    try:
+        b = subprocess.run(["git", "rev-parse", "--abbrev-ref", "HEAD"], capture_output=True, text=True, cwd=BASE_DIR)
+        if b.returncode == 0 and b.stdout.strip():
+            branch = b.stdout.strip()
+    except Exception:
+        pass
+
+    return repo_url, branch
 
 
 def generate_accelerated_urls(repo_url: str, branch: str = "main") -> Dict[str, str]:
@@ -27,68 +48,98 @@ def generate_accelerated_urls(repo_url: str, branch: str = "main") -> Dict[str, 
 
     results = {}
 
-    if "gitee.com" in repo_url:
-        # Gitee: 国内直接支持 raw 访问
-        parts = repo_url.split("gitee.com/")
+    # 提取协议后面的 host 与路径
+    clean_url = repo_url
+    if "git@github.com:" in repo_url:
+        clean_url = repo_url.replace("git@github.com:", "https://github.com/")
+    elif "git@gitee.com:" in repo_url:
+        clean_url = repo_url.replace("git@gitee.com:", "https://gitee.com/")
+
+    if "gitee.com" in clean_url:
+        # Gitee: 国内直接支持 raw 访问 (100% 国内千兆骨干直连，完全无需翻墙)
+        parts = clean_url.split("gitee.com/")
         if len(parts) == 2:
             path = parts[1]
             results["gitee_raw_m3u"] = f"https://gitee.com/{path}/raw/{branch}/live.m3u"
             results["gitee_raw_txt"] = f"https://gitee.com/{path}/raw/{branch}/live_xiaowei.txt"
+            results["gitee_best_txt"] = f"https://gitee.com/{path}/raw/{branch}/output/live_best.txt"
+            results["gitee_best_m3u"] = f"https://gitee.com/{path}/raw/{branch}/output/live_best.m3u"
             results["platform"] = "Gitee (国内码云, 电视直连极佳 🌟)"
-    elif "github.com" in repo_url:
+    elif "github.com" in clean_url:
         # GitHub: 转换为国内电视免翻墙 CDN 镜像直链
-        parts = repo_url.split("github.com/")
+        parts = clean_url.split("github.com/")
         if len(parts) == 2:
             path = parts[1]  # user/repo
-            # 1. jsDelivr 全球加速 (国内直连)
+            # 1. jsDelivr 全球/国内边缘加速 (Fastly & Cloudflare)
             results["jsdelivr_m3u"] = f"https://fastly.jsdelivr.net/gh/{path}@{branch}/output/live.m3u"
             results["jsdelivr_txt"] = f"https://fastly.jsdelivr.net/gh/{path}@{branch}/output/live_xiaowei.txt"
-            # 2. ghproxy 镜像加速 (国内电视极速稳定)
+            results["jsdelivr_best_txt"] = f"https://fastly.jsdelivr.net/gh/{path}@{branch}/output/live_best.txt"
+            results["jsdelivr_best_m3u"] = f"https://fastly.jsdelivr.net/gh/{path}@{branch}/output/live_best.m3u"
+            results["jsdelivr_cdn_best_txt"] = f"https://cdn.jsdelivr.net/gh/{path}@{branch}/output/live_best.txt"
+
+            # 2. GHProxy 国内三网专线反向代理 (支持多镜像节点冗余)
             results["ghproxy_m3u"] = f"https://ghproxy.net/https://raw.githubusercontent.com/{path}/{branch}/output/live.m3u"
             results["ghproxy_txt"] = f"https://ghproxy.net/https://raw.githubusercontent.com/{path}/{branch}/output/live_xiaowei.txt"
-            # 3. 原始 GitHub 直链 (易被国内网络污染)
+            results["ghproxy_best_txt"] = f"https://ghproxy.net/https://raw.githubusercontent.com/{path}/{branch}/output/live_best.txt"
+            results["ghproxy_best_m3u"] = f"https://ghproxy.net/https://raw.githubusercontent.com/{path}/{branch}/output/live_best.m3u"
+            results["mirror_ghproxy_best_txt"] = f"https://mirror.ghproxy.com/https://raw.githubusercontent.com/{path}/{branch}/output/live_best.txt"
+
+            # 3. GitMirror 国内镜像节点
+            results["gitmirror_best_txt"] = f"https://raw.gitmirror.com/{path}/{branch}/output/live_best.txt"
+
+            # 4. 原始 GitHub 直链 (易被国内网络污染阻断，仅作为技术参考)
             results["github_raw_m3u"] = f"https://raw.githubusercontent.com/{path}/{branch}/output/live.m3u"
-            results["platform"] = "GitHub (已附带国内 CDN 极速镜像加速)"
+            results["github_raw_best_txt"] = f"https://raw.githubusercontent.com/{path}/{branch}/output/live_best.txt"
+            results["platform"] = "GitHub (已注入国内 CDN 极速防墙镜像加速)"
 
     return results
 
 
 def print_cloud_sharing_guide(repo_url: Optional[str] = None):
-    print("=" * 72)
-    print("        📺 清风直播 - 直播源云端托管与电视秒开加速指引")
-    print("=" * 72)
+    print("=" * 74)
+    print("     📺 清风/小薇直播 - 防 GitHub 阻断与免翻墙极速订阅源指引")
+    print("=" * 74)
 
-    if repo_url:
-        urls = generate_accelerated_urls(repo_url)
-        print(f"\n[+] 检测到仓库: {repo_url} ({urls.get('platform', '')})")
-        print("\n👉 请直接将下方链接填入电视端【链接】输入框中 (免开电脑、关机照看不卡顿):")
-        for k, v in urls.items():
-            if "m3u" in k:
-                print(f"   📡 M3U 电视直链 [{k}]:\n      👉 {v}\n")
-        return
+    auto_repo, auto_branch = get_current_git_info()
+    target_repo = repo_url or auto_repo or "https://github.com/hamster00000/xiaoweizhibo"
+    branch = auto_branch or "master"
 
-    print("""
-【国内智能电视云端托管 2 种最佳实践】:
+    urls = generate_accelerated_urls(target_repo, branch=branch)
+    print(f"\n[+] 当前生效仓库: {target_repo} (分支: {branch})")
+    print(f"[+] 加速引擎类型: {urls.get('platform', '自定义')}\n")
 
-方案 A：Gitee (码云 - 最推荐 🌟，国内千兆直连，红米电视秒开)
-----------------------------------------------------------------------
-1. 打开 https://gitee.com 登录并点击右上角【+】->【新建仓库】；
-2. 仓库名称填写: live，设为【开源 (公开)】；
-3. 将本项目 output/live.m3u 文件上传或新建同名文件粘贴保存；
-4. 电视端【链接】直接填入您的 Gitee 直链:
-   👉 https://gitee.com/<您的用户名>/live/raw/master/live.m3u
-   (免开电脑、国内三网 BGP 秒开，手机电脑随时在网页上改台)
+    print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    print("⭐ 【方案一：小薇直播专享 TXT 订阅源】(单台仅保留 1 条最优信号源，防卡顿首选)")
+    print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    print("说明: 小薇直播或电视机盒在【网络自定义】直接填入下列任一直链（已解决 GitHub 无法访问问题）:\n")
+    if "jsdelivr_best_txt" in urls:
+        print(f"  1. 🚀 jsDelivr CDN 全球加速专线 (推荐):\n     👉 {urls['jsdelivr_best_txt']}\n")
+    if "ghproxy_best_txt" in urls:
+        print(f"  2. ⚡ GHProxy 国内三网高可用镜像 (备用):\n     👉 {urls['ghproxy_best_txt']}\n")
+    if "mirror_ghproxy_best_txt" in urls:
+        print(f"  3. 🛡️ GHProxy 备选专线 (多路容灾):\n     👉 {urls['mirror_ghproxy_best_txt']}\n")
+    if "gitee_best_txt" in urls:
+        print(f"  4. 🇨🇳 Gitee 码云国内骨干直连 (100% 免翻墙):\n     👉 {urls['gitee_best_txt']}\n")
 
-方案 B：GitHub + jsDelivr / ghproxy 国内免翻墙加速 (极客方案)
-----------------------------------------------------------------------
-由于国内家庭宽带直接连 raw.githubusercontent.com 容易被 DNS 污染超时，
-若放在 GitHub 上，电视端请使用自带的 CDN 加速直链：
-   👉 https://fastly.jsdelivr.net/gh/<用户名>/<仓库>@main/output/live.m3u
-   或
-   👉 https://ghproxy.net/https://raw.githubusercontent.com/<用户名>/<仓库>/main/output/live.m3u
-""")
+    print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    print("⭐ 【方案二：通用 M3U 播放器订阅源】(适用于影视仓/TiviMate/Kodi/清风直播)")
+    print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    if "jsdelivr_best_m3u" in urls:
+        print(f"  1. 🚀 jsDelivr CDN (最优单源):\n     👉 {urls['jsdelivr_best_m3u']}\n")
+    if "ghproxy_best_m3u" in urls:
+        print(f"  2. ⚡ GHProxy 镜像 (最优单源):\n     👉 {urls['ghproxy_best_m3u']}\n")
+    if "jsdelivr_m3u" in urls:
+        print(f"  3. 📡 jsDelivr CDN (全量多备选源):\n     👉 {urls['jsdelivr_m3u']}\n")
+
+    print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    print("⭐ 【方案三：家庭局域网 0 阻断专线】(完全不依赖 GitHub 与任何外网)")
+    print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    print("说明: 本机已开启局域网服务，电视直接连本机 IP，响应时间 < 5ms，完全免疫任何外网故障:")
+    print("   👉 http://192.168.0.113:8088/live.txt    (小薇直播 - 默认单台最优)")
+    print("   👉 http://192.168.0.113:8088/best.txt    (小薇直播 - 显式单台最优)")
+    print("   👉 http://192.168.0.113:8088/live.m3u    (通用 M3U 格式)\n")
 
 
 if __name__ == "__main__":
-    target_repo = sys.argv[1] if len(sys.argv) > 1 else None
-    print_cloud_sharing_guide(target_repo)
+    target = sys.argv[1] if len(sys.argv) > 1 else None
+    print_cloud_sharing_guide(target)

@@ -132,7 +132,9 @@ class StreamExporter:
         grouped_channels: Dict[str, Dict[str, List[ChannelItem]]],
         output_dir: str = "output",
         xiaowei_filename: str = "live_xiaowei.txt",
-        m3u_filename: str = "live.m3u"
+        m3u_filename: str = "live.m3u",
+        best_xiaowei_filename: str = "live_best.txt",
+        best_m3u_filename: str = "live_best.m3u"
     ) -> Tuple[str, str]:
         """将两种格式写入目标输出目录，采用原子写入 (先 .tmp 再 os.replace) 保证读写无冲突"""
         os.makedirs(output_dir, exist_ok=True)
@@ -153,6 +155,27 @@ class StreamExporter:
             f.write(m3u_content)
             f.flush()
             os.fsync(f.fileno())
+
+        # 同时原子写入单台最优静态源文件（专为电视盒/小薇直播无法处理 ?best=1 参数设计）
+        if best_xiaowei_filename:
+            best_txt_path = os.path.join(output_dir, best_xiaowei_filename)
+            best_txt_tmp = best_txt_path + ".tmp"
+            best_txt_content = self.export_xiaowei_txt(grouped_channels, only_best=True)
+            with open(best_txt_tmp, "w", encoding="utf-8") as f:
+                f.write(best_txt_content)
+                f.flush()
+                os.fsync(f.fileno())
+            os.replace(best_txt_tmp, best_txt_path)
+
+        if best_m3u_filename:
+            best_m3u_path = os.path.join(output_dir, best_m3u_filename)
+            best_m3u_tmp = best_m3u_path + ".tmp"
+            best_m3u_content = self.export_standard_m3u(grouped_channels, only_best=True)
+            with open(best_m3u_tmp, "w", encoding="utf-8") as f:
+                f.write(best_m3u_content)
+                f.flush()
+                os.fsync(f.fileno())
+            os.replace(best_m3u_tmp, best_m3u_path)
 
         # 原子重命名
         os.replace(txt_tmp, txt_path)
