@@ -93,6 +93,11 @@ class SourceFetcher:
                 return decode_bytes_adaptive(resp.content)
         else:
             local_path = source_path_or_url.replace("file://", "")
+            if not os.path.isabs(local_path):
+                base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                cand = os.path.join(base_dir, local_path)
+                if os.path.exists(cand):
+                    local_path = cand
             if not os.path.exists(local_path):
                 raise FileNotFoundError(f"Local source file not found: {local_path}")
             with open(local_path, "rb") as f:

@@ -42,6 +42,11 @@ class StreamExporter:
         self.preferred_keywords = [kw.lower() for kw in kws]
         self.prioritize_yangshipin = prioritize_yangshipin
 
+    def is_yangshipin_cn(self, item: ChannelItem) -> bool:
+        """检查线路是否属于明确的 yangshipin.cn 域名或订阅源"""
+        target = f"{item.url} {item.raw_name} {item.source_origin}".lower()
+        return "yangshipin.cn" in target or "yangshipin" in target
+
     def is_preferred(self, item: ChannelItem) -> bool:
         """检查线路是否属于优先推荐线路 (如央视频 yangshipin / ysp 等官方优质源)"""
         if not self.prioritize_yangshipin:
@@ -51,9 +56,22 @@ class StreamExporter:
         target = f"{item.url} {item.raw_name} {item.source_origin} {item.tvg_id}".lower()
         return any(kw in target for kw in self.preferred_keywords)
 
+    def get_line_rank(self, item: ChannelItem) -> int:
+        """
+        线路排位等级：
+        0: 严格匹配 yangshipin.cn 订阅源或域名（绝对优先锁定在线路 1）
+        1: 包含央视频其他官方集群 (ysp.cctv.cn, cctv.cn 等)
+        2: 普通第三方源
+        """
+        if self.is_yangshipin_cn(item):
+            return 0
+        if self.is_preferred(item):
+            return 1
+        return 2
+
     def deduplicate_and_rank(self, items: List[ChannelItem], only_best: Optional[bool] = None) -> Dict[str, Dict[str, List[ChannelItem]]]:
         """
-        按 [分组 -> 频道名称] 分类去重，并优先保留央视频线路、按延迟从小到大保留最优线路
+        按 [分组 -> 频道名称] 分类去重，并严格将 yangshipin.cn 放在线路 1、按延迟从小到大保留最优线路
         结构: { group_name: { channel_name: [ChannelItem, ...] } }
         """
         is_only_best = self.only_best if only_best is None else only_best
@@ -74,11 +92,11 @@ class StreamExporter:
             seen_urls.add(item.url)
             grouped[item.group][item.name].append(item)
 
-        # 对每个频道的线路按 [是否优先(央视频等) -> 响应延迟升序] 排序并截取最大限制
+        # 对每个频道的线路按 [排位等级(yangshipin.cn为0) -> 响应延迟升序] 排序并截取最大限制
         for group, channels in grouped.items():
             for ch_name, lines in channels.items():
                 lines.sort(key=lambda x: (
-                    not self.is_preferred(x),
+                    self.get_line_rank(x),
                     x.latency_ms is None,
                     x.latency_ms or 99999
                 ))

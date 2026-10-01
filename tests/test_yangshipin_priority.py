@@ -116,6 +116,26 @@ class TestYangShiPinPriority(unittest.TestCase):
         self.assertEqual(hunan_lines[0].url, "http://line-a/hunan.m3u8")
         self.assertEqual(hunan_lines[1].url, "http://line-b/hunan.m3u8")
 
+    def test_yangshipin_cn_strictly_on_line_1(self):
+        """测试将 yangshipin.cn 的订阅源绝对置于【线路 1】"""
+        items = [
+            # 第三方源 (10ms)
+            ChannelItem(raw_name="CCTV-1", name="CCTV-1", url="http://other.com/cctv1.m3u8", group="央视频道", latency_ms=10.0, is_valid=True),
+            # 央视频 ysp.cctv.cn 源 (20ms)
+            ChannelItem(raw_name="CCTV-1", name="CCTV-1", url="http://mobilelive-ds.ysp.cctv.cn/ysp/cctv1.m3u8", group="央视频道", latency_ms=20.0, is_valid=True),
+            # yangshipin.cn 域名或来源源 (50ms)
+            ChannelItem(raw_name="CCTV-1 [yangshipin.cn]", name="CCTV-1", url="http://liveplay.yangshipin.cn/live/cctv1.m3u8", group="央视频道", latency_ms=50.0, is_valid=True, source_origin="yangshipin.cn"),
+        ]
+
+        grouped = self.exporter.deduplicate_and_rank(items)
+        lines = grouped["央视频道"]["CCTV-1"]
+
+        # 验证线路 1 必须是 yangshipin.cn
+        self.assertEqual(len(lines), 3)
+        self.assertEqual(lines[0].url, "http://liveplay.yangshipin.cn/live/cctv1.m3u8", "线路 1 必须是 yangshipin.cn")
+        self.assertEqual(lines[1].url, "http://mobilelive-ds.ysp.cctv.cn/ysp/cctv1.m3u8", "线路 2 是其他央视频源")
+        self.assertEqual(lines[2].url, "http://other.com/cctv1.m3u8", "线路 3 是第三方源")
+
 
 if __name__ == "__main__":
     unittest.main()

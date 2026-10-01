@@ -1,6 +1,11 @@
 {
   "sources": [
     {
+      "name": "yangshipin.cn",
+      "url": "file://sources/yangshipin.m3u",
+      "format": "m3u"
+    },
+    {
       "name": "Guovin_IPTV",
       "url": "https://raw.githubusercontent.com/Guovin/iptv-api/gd/output/result.m3u",
       "format": "m3u"
