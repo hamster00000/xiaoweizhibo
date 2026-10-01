@@ -745,6 +745,141 @@
       border-top: 1px solid var(--border);
       background: rgba(11, 16, 26, 0.7);
     }
+
+    /* 播放器控制按钮通用样式 */
+    .tv-ctrl-btn {
+      padding: 3px 10px;
+      font-size: 0.75rem;
+      background: rgba(0, 0, 0, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      color: #f1f5f9;
+      border-radius: 4px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      backdrop-filter: blur(4px);
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+
+    .tv-ctrl-btn:hover {
+      background: rgba(14, 165, 233, 0.85);
+      border-color: rgba(56, 189, 248, 0.9);
+      color: #ffffff;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(14, 165, 233, 0.4);
+    }
+
+    .tv-ctrl-btn:active {
+      transform: translateY(0);
+    }
+
+    /* 全屏显示模式适配 (标准与厂商前缀及模拟全屏 fallback) */
+    .tv-frame:fullscreen,
+    .tv-frame:-webkit-full-screen,
+    .tv-frame:-moz-full-screen,
+    .tv-frame:-ms-fullscreen,
+    .tv-frame.is-fullscreen {
+      width: 100vw !important;
+      height: 100vh !important;
+      max-width: 100vw !important;
+      max-height: 100vh !important;
+      aspect-ratio: auto !important;
+      border: none !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      background: #000000 !important;
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      bottom: 0 !important;
+      z-index: 999999 !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+
+    .tv-frame:fullscreen #tvVideo,
+    .tv-frame:-webkit-full-screen #tvVideo,
+    .tv-frame:-moz-full-screen #tvVideo,
+    .tv-frame.is-fullscreen #tvVideo {
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: contain !important;
+    }
+
+    /* 全屏状态下 OSD 与控件放大增强 */
+    .tv-frame:fullscreen .tv-osd-top,
+    .tv-frame:-webkit-full-screen .tv-osd-top,
+    .tv-frame.is-fullscreen .tv-osd-top {
+      top: 24px;
+      left: 24px;
+      font-size: 0.95rem;
+      padding: 6px 14px;
+      border-radius: 6px;
+    }
+
+    .tv-frame:fullscreen .tv-live-badge,
+    .tv-frame:-webkit-full-screen .tv-live-badge,
+    .tv-frame.is-fullscreen .tv-live-badge {
+      top: 24px;
+      right: 24px;
+      font-size: 0.85rem;
+      padding: 5px 12px;
+      border-radius: 4px;
+    }
+
+    .tv-frame:fullscreen .tv-control-bar,
+    .tv-frame:-webkit-full-screen .tv-control-bar,
+    .tv-frame.is-fullscreen .tv-control-bar {
+      top: 24px !important;
+      right: 120px !important;
+      gap: 10px !important;
+      transition: opacity 0.4s ease;
+    }
+
+    .tv-frame:fullscreen .tv-ctrl-btn,
+    .tv-frame:-webkit-full-screen .tv-ctrl-btn,
+    .tv-frame.is-fullscreen .tv-ctrl-btn {
+      padding: 6px 14px;
+      font-size: 0.85rem;
+    }
+
+    .tv-frame:fullscreen .tv-epg-banner,
+    .tv-frame:-webkit-full-screen .tv-epg-banner,
+    .tv-frame.is-fullscreen .tv-epg-banner {
+      bottom: 28px;
+      left: 28px;
+      right: 28px;
+      padding: 18px 24px;
+      border-radius: 10px;
+    }
+
+    .tv-frame:fullscreen .tv-ch-title,
+    .tv-frame:-webkit-full-screen .tv-ch-title,
+    .tv-frame.is-fullscreen .tv-ch-title {
+      font-size: 2.8rem;
+    }
+
+    .tv-frame:fullscreen .tv-ch-number,
+    .tv-frame:-webkit-full-screen .tv-ch-number,
+    .tv-frame.is-fullscreen .tv-ch-number {
+      font-size: 3.5rem;
+    }
+
+    /* 全屏沉浸模式：空闲时自动隐藏鼠标与控制条 */
+    .tv-frame.is-fullscreen.controls-idle,
+    .tv-frame:fullscreen.controls-idle,
+    .tv-frame:-webkit-full-screen.controls-idle {
+      cursor: none;
+    }
+
+    .tv-frame.is-fullscreen.controls-idle .tv-control-bar,
+    .tv-frame:fullscreen.controls-idle .tv-control-bar {
+      opacity: 0;
+      pointer-events: none;
+    }
   </style>
 </head>
 <body>
@@ -1051,7 +1186,7 @@
       </div>
       <div class="card-body">
         <div class="tv-container">
-          <div class="tv-frame" id="tvFrame" onclick="toggleOsdDisplay()">
+          <div class="tv-frame" id="tvFrame" onclick="toggleOsdDisplay()" ondblclick="toggleTvFullscreen()" title="点击切换信息显示，双击进入/退出全屏 (快捷键: F)">
             <!-- 真实流媒体播放器 -->
             <video id="tvVideo" playsinline autoplay muted loop style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:2; background:#000;"></video>
 
@@ -1066,9 +1201,12 @@
             <div class="tv-live-badge" style="z-index:4;">LIVE 直播</div>
 
             <!-- 控制工具条 -->
-            <div style="position:absolute; top:12px; right:95px; z-index:5; display:flex; gap:6px;">
-              <button id="btnTvAudio" class="btn btn-secondary" style="padding:2px 8px; font-size:0.72rem; background:rgba(0,0,0,0.65); border:1px solid rgba(255,255,255,0.2);" onclick="event.stopPropagation(); toggleTvAudio()">
+            <div class="tv-control-bar" style="position:absolute; top:12px; right:95px; z-index:5; display:flex; gap:6px; align-items:center;">
+              <button id="btnTvAudio" class="btn btn-secondary tv-ctrl-btn" onclick="event.stopPropagation(); toggleTvAudio()" title="开启/关闭声音">
                 🔇 开启声音
+              </button>
+              <button id="btnTvFullscreen" class="btn btn-secondary tv-ctrl-btn" onclick="event.stopPropagation(); toggleTvFullscreen()" title="全屏画面 (快捷键: F / 双击画面)">
+                ⛶ 全屏
               </button>
             </div>
 
@@ -1108,9 +1246,15 @@
               <button class="d-center" onclick="remoteConfirm()">OK</button>
             </div>
 
+            <div style="display:flex; justify-content:center; margin-top:10px;">
+              <button id="btnRemoteFullscreen" class="btn btn-secondary" style="font-size:0.75rem; padding:4px 12px; background:rgba(30,41,59,0.9); border:1px solid #334155; border-radius:6px; cursor:pointer;" onclick="toggleTvFullscreen()" title="切换电视全屏播放 (快捷键: F)">
+                ⛶ 切换全屏显示
+              </button>
+            </div>
+
             <div class="remote-helper">
               <strong>💡 遥控指引 (亦支持电脑键盘)</strong><br>
-              键盘 <strong>[↑ / ↓]</strong> 切换频道 &nbsp;•&nbsp; 键盘 <strong>[← / →]</strong> 切换线路源
+              键盘 <strong>[↑ / ↓]</strong> 切换频道 &nbsp;•&nbsp; 键盘 <strong>[← / →]</strong> 切换线路源 &nbsp;•&nbsp; <strong>[F]</strong> 或<strong>双击画面</strong>全屏
             </div>
           </div>
         </div>
@@ -1663,6 +1807,134 @@ CCTV-13 新闻高清,http://111.20.10.13:8080/live/cctv13.m3u8
       }
     }
 
+    // 全屏支持与状态维护
+    let hideFullscreenControlsTimer = null;
+
+    function isTvFullscreen() {
+      const tvFrame = document.getElementById('tvFrame');
+      return Boolean(
+        document.fullscreenElement === tvFrame ||
+        document.webkitFullscreenElement === tvFrame ||
+        document.mozFullScreenElement === tvFrame ||
+        document.msFullscreenElement === tvFrame ||
+        (tvFrame && tvFrame.classList.contains('is-fullscreen'))
+      );
+    }
+
+    function toggleTvFullscreen() {
+      const tvFrame = document.getElementById('tvFrame');
+      if (!tvFrame) return;
+
+      if (isTvFullscreen()) {
+        exitTvFullscreen();
+      } else {
+        enterTvFullscreen(tvFrame);
+      }
+    }
+
+    function enterTvFullscreen(el) {
+      if (el.requestFullscreen) {
+        el.requestFullscreen().catch(() => fallbackFullscreen(el, true));
+      } else if (el.webkitRequestFullscreen) {
+        el.webkitRequestFullscreen();
+      } else if (el.mozRequestFullScreen) {
+        el.mozRequestFullScreen();
+      } else if (el.msRequestFullscreen) {
+        el.msRequestFullscreen();
+      } else {
+        fallbackFullscreen(el, true);
+      }
+    }
+
+    function exitTvFullscreen() {
+      const tvFrame = document.getElementById('tvFrame');
+      const isNative = Boolean(
+        document.fullscreenElement ||
+        document.webkitFullscreenElement ||
+        document.mozFullScreenElement ||
+        document.msFullscreenElement
+      );
+
+      if (isNative) {
+        if (document.exitFullscreen) {
+          document.exitFullscreen().catch(() => fallbackFullscreen(tvFrame, false));
+        } else if (document.webkitExitFullscreen) {
+          document.webkitExitFullscreen();
+        } else if (document.mozCancelFullScreen) {
+          document.mozCancelFullScreen();
+        } else if (document.msExitFullscreen) {
+          document.msExitFullscreen();
+        } else {
+          fallbackFullscreen(tvFrame, false);
+        }
+      } else {
+        fallbackFullscreen(tvFrame, false);
+      }
+    }
+
+    function fallbackFullscreen(el, enable) {
+      if (!el) return;
+      if (enable) {
+        el.classList.add('is-fullscreen');
+        document.body.style.overflow = 'hidden';
+      } else {
+        el.classList.remove('is-fullscreen');
+        document.body.style.overflow = '';
+      }
+      updateFullscreenBtnUI(enable);
+    }
+
+    function updateFullscreenBtnUI(isFull) {
+      const btn = document.getElementById('btnTvFullscreen');
+      const remoteBtn = document.getElementById('btnRemoteFullscreen');
+      const text = isFull ? '🗗 退出全屏' : '⛶ 全屏';
+      const title = isFull ? '退出全屏 (快捷键: Esc 或 F)' : '全屏画面 (快捷键: F / 双击画面)';
+
+      if (btn) {
+        btn.innerHTML = text;
+        btn.title = title;
+      }
+      if (remoteBtn) {
+        remoteBtn.innerHTML = isFull ? '🗗 退出电视全屏' : '⛶ 切换全屏显示';
+        remoteBtn.title = title;
+      }
+    }
+
+    function handleFullscreenMouseMove() {
+      const tvFrame = document.getElementById('tvFrame');
+      if (!tvFrame || !isTvFullscreen()) return;
+
+      tvFrame.classList.remove('controls-idle');
+      if (hideFullscreenControlsTimer) clearTimeout(hideFullscreenControlsTimer);
+      hideFullscreenControlsTimer = setTimeout(() => {
+        if (isTvFullscreen()) {
+          tvFrame.classList.add('controls-idle');
+        }
+      }, 3000);
+    }
+
+    ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'].forEach(evt => {
+      document.addEventListener(evt, () => {
+        const tvFrame = document.getElementById('tvFrame');
+        const isFull = Boolean(
+          document.fullscreenElement === tvFrame ||
+          document.webkitFullscreenElement === tvFrame ||
+          document.mozFullScreenElement === tvFrame ||
+          document.msFullscreenElement === tvFrame
+        );
+        if (tvFrame) {
+          if (isFull) tvFrame.classList.add('is-fullscreen');
+          else {
+            tvFrame.classList.remove('is-fullscreen');
+            tvFrame.classList.remove('controls-idle');
+          }
+        }
+        updateFullscreenBtnUI(isFull);
+      });
+    });
+
+    document.addEventListener('mousemove', handleFullscreenMouseMove);
+
     function toggleOsdDisplay() {
       const center = document.getElementById('tvOsdCenter');
       const epg = document.getElementById('tvOsdEpg');
@@ -1850,8 +2122,12 @@ CCTV-13 新闻高清,http://111.20.10.13:8080/live/cctv13.m3u8
       toggleOsdDisplay();
     }
 
-    // 绑定物理键盘的方向键
+    // 绑定物理键盘的方向键与全屏快捷键
     window.addEventListener('keydown', (e) => {
+      // 避免输入框或文本域中的键盘输入被拦截
+      const tag = document.activeElement ? document.activeElement.tagName : '';
+      if (['INPUT', 'TEXTAREA'].includes(tag)) return;
+
       if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.code)) {
         e.preventDefault();
       }
@@ -1860,6 +2136,17 @@ CCTV-13 新闻高清,http://111.20.10.13:8080/live/cctv13.m3u8
       if (e.code === "ArrowLeft") remotePrevLine();
       if (e.code === "ArrowRight") remoteNextLine();
       if (e.code === "Enter") remoteConfirm();
+
+      // F 键快捷切换画面全屏
+      if (e.code === "KeyF" || e.key === "f" || e.key === "F") {
+        e.preventDefault();
+        toggleTvFullscreen();
+      }
+
+      // Esc 键在 CSS 降级全屏模式下退出
+      if (e.key === "Escape" && isTvFullscreen()) {
+        exitTvFullscreen();
+      }
     });
 
     // 初始化
