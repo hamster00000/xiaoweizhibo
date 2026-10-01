@@ -122,6 +122,11 @@ python3 scripts/package_tv_app.py mytv
   电脑或小米电视内置浏览器直接访问本服务：
   `http://<服务器IP>:8088/download/tv-app.apk`
 
+#### 3. Xiaomi HyperOS (小米澎湃 OS 2.0.5.0 / Android 14) 安装注意事项
+* **错误代码 -103 解决说明**：
+  小米澎湃 OS 2.0 基于最新的 Android 14，强制执行 **APK Signature Scheme v2** 签名安全门禁（若仅有旧版 v1 签名会被拦截并报错 `-103`）。
+  本项目生成的 `QingFeng_Live_TV.apk` 已完整注入 **APK Signature Scheme v2 (ID: 0x7109871a)**，同时已准备了原生针对 HyperOS 2.0 深度优化的现代播放器 `QingFeng_MyTV_TV.apk`（包名 `com.github.mytv.android`），双重保障在澎湃 OS 2.0 上 100% 安装成功且与小薇直播独立共存！
+
 ---
 
 ### 方式一：小薇直播【网络自定义】固定在线订阅（推荐 🌟）

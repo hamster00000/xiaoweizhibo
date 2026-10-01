@@ -104,6 +104,15 @@ class TestTvPackagingAndEndpoints(unittest.TestCase):
         # 验证 resources.arsc 包含清风直播
         self.assertIn("清风直播".encode("utf-8"), arsc_bytes, "arsc 中必须包含应用名称'清风直播'")
 
+        # 验证包含 APK Signature Scheme v2 (修复 Xiaomi HyperOS 2.0 -103 错误)
+        with open(apk_path, "rb") as f:
+            apk_bytes = f.read()
+        eocd_pos = apk_bytes.rfind(b"PK\x05\x06")
+        self.assertNotEqual(eocd_pos, -1)
+        cd_size, cd_offset = struct.unpack("<II", apk_bytes[eocd_pos + 12:eocd_pos + 20])
+        magic = apk_bytes[cd_offset - 16:cd_offset]
+        self.assertEqual(magic, b"APK Sig Block 42", "必须包含 APK Sig Block 42 以满足 HyperOS 2.0 强制签名要求")
+
     def test_download_apk_endpoint_and_headers(self):
         url = f"http://127.0.0.1:{TEST_PORT_TV}/download/tv-app.apk"
         req = urllib.request.Request(url)
