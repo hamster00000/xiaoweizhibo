@@ -138,9 +138,9 @@ public class MainActivity extends Activity {
                 return true;
 
             case KeyEvent.KEYCODE_MENU:
-                // 菜单键：刷新或重新加载当前线路
-                showOsdNotice("正在刷新直播线路...");
-                mWebView.reload();
+                // 菜单键：快速切换画质清晰度与防卡模式
+                showOsdNotice("正在切换画质清晰度...");
+                mWebView.evaluateJavascript("if(typeof cycleQuality === 'function'){ cycleQuality(); }", null);
                 return true;
 
             case KeyEvent.KEYCODE_BACK:

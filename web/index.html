@@ -1015,6 +1015,138 @@
       border-color: #38bdf8;
     }
 
+    /* 电视端清晰度快速选择面板 (Quality Selection Menu) */
+    .tv-quality-menu {
+      position: absolute;
+      top: 38px;
+      right: 0;
+      width: 215px;
+      background: rgba(15, 23, 42, 0.96);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(56, 189, 248, 0.45);
+      border-radius: 8px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.8);
+      padding: 6px;
+      display: none;
+      flex-direction: column;
+      gap: 4px;
+      z-index: 50;
+      animation: fadeInQuality 0.18s ease;
+      text-align: left;
+    }
+    .tv-quality-menu.open {
+      display: flex;
+    }
+    @keyframes fadeInQuality {
+      from { opacity: 0; transform: translateY(-6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .quality-menu-header {
+      font-size: 0.72rem;
+      color: #94a3b8;
+      padding: 4px 8px 6px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      font-weight: 700;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .quality-menu-item {
+      padding: 7px 9px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      border: 1px solid transparent;
+      user-select: none;
+    }
+    .quality-menu-item:hover {
+      background: rgba(56, 189, 248, 0.18);
+      border-color: rgba(56, 189, 248, 0.35);
+    }
+    .quality-menu-item.active {
+      background: rgba(14, 165, 233, 0.28);
+      border-color: #38bdf8;
+    }
+    .quality-menu-item .q-main {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #f8fafc;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .quality-menu-item.active .q-main {
+      color: #38bdf8;
+    }
+    .quality-menu-item .q-sub {
+      font-size: 0.68rem;
+      color: #94a3b8;
+    }
+    .badge-rec {
+      font-size: 0.62rem;
+      background: #10b981;
+      color: #fff;
+      padding: 1px 5px;
+      border-radius: 10px;
+      font-weight: 600;
+      margin-left: 4px;
+    }
+
+    /* 电视大屏浮动通知 Toast */
+    .tv-toast-notice {
+      position: absolute;
+      top: 20%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(15, 23, 42, 0.92);
+      border: 1.5px solid #38bdf8;
+      border-radius: 12px;
+      padding: 12px 24px;
+      color: #f8fafc;
+      font-size: 1.05rem;
+      font-weight: 700;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.8), 0 0 18px rgba(56,189,248,0.4);
+      z-index: 60;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      white-space: nowrap;
+    }
+    .tv-toast-notice.show {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1.03);
+    }
+
+    /* 单台最好信号源模式专属徽标 */
+    .badge-best-source {
+      background: rgba(16, 185, 129, 0.18);
+      border: 1px solid rgba(16, 185, 129, 0.45);
+      color: #34d399;
+      font-size: 0.68rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+    .badge-quality-tag {
+      background: rgba(56, 189, 248, 0.15);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      color: #38bdf8;
+      font-size: 0.68rem;
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-weight: 600;
+    }
+
     /* 小米电视应用安装模态框样式 */
     .tv-modal-overlay {
       position: fixed;
@@ -1274,7 +1406,10 @@
             <span class="group-pill" onclick="filterTableByGroup('体育频道')">体育频道</span>
             <span class="group-pill" onclick="filterTableByGroup('地方频道')">地方台</span>
           </div>
-          <div style="position:relative;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <button id="btnTableOnlyBest" class="btn btn-secondary" style="font-size:0.75rem; padding:4px 10px; border-color:#10b981; color:#34d399; font-weight:600;" onclick="toggleTableSourceView()" title="点击切换：默认只显单台最好信号源 / 展开全部备用源">
+              ⭐ 默认只显单台最好信号源 (已开启)
+            </button>
             <input type="text" id="channelSearchInput" oninput="handleTableSearch(this.value)" placeholder="🔍 快速搜索电视台..." style="padding:4px 10px; background:#1e293b; border:1px solid #334155; border-radius:6px; color:#f1f5f9; font-size:0.75rem; width:160px; outline:none;">
           </div>
         </div>
@@ -1283,11 +1418,11 @@
         <div class="channel-table-wrapper">
           <table class="channel-table">
             <thead>
-              <tr>
+              <tr id="channelTableHeadRow">
                 <th>频道名称</th>
                 <th>分组</th>
-                <th>优选线路 1 (最快)</th>
-                <th>优选线路 2 (备用)</th>
+                <th>最好信号源 (极速第一)</th>
+                <th>画质清晰度</th>
                 <th>操作</th>
               </tr>
             </thead>
@@ -1318,19 +1453,23 @@
               在清风直播【网络自定义】中填入固定订阅直链，后台每天自动更新，电视端永不失效：
             </p>
             <div style="display:flex; flex-direction:column; gap:6px;">
-              <label style="font-size:0.75rem; color:#94a3b8;">📺 清风直播专属直链 (/live.txt):</label>
-              <input type="text" class="sub-url-input" id="subUrlField" value="http://localhost:8088/live.txt" readonly>
+              <label style="font-size:0.75rem; color:#34d399; font-weight:600;">⭐ 清风专属直链 [默认单台最好源·极力推荐] (/live.txt?best=1):</label>
+              <input type="text" class="sub-url-input" id="subUrlField" value="http://localhost:8088/live.txt?best=1" readonly>
             </div>
             <div style="display:flex; flex-direction:column; gap:6px;">
-              <label style="font-size:0.75rem; color:#94a3b8;">📱 通用 M3U 播放列表 (/live.m3u):</label>
-              <input type="text" class="sub-url-input" id="subM3uField" value="http://localhost:8088/live.m3u" readonly>
+              <label style="font-size:0.75rem; color:#94a3b8;">📱 通用 M3U 播放列表 [单台最优源] (/live.m3u?best=1):</label>
+              <input type="text" class="sub-url-input" id="subM3uField" value="http://localhost:8088/live.m3u?best=1" readonly>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:6px;">
+              <label style="font-size:0.75rem; color:#94a3b8;">📑 全量备用直链 [含全部备用多线路] (/live.txt):</label>
+              <input type="text" class="sub-url-input" id="subFullUrlField" value="http://localhost:8088/live.txt" readonly>
             </div>
             <div style="display:flex; gap:8px; margin-top:4px;">
               <button class="btn btn-primary" style="flex:1; justify-content:center;" onclick="copySubUrl()">
-                📋 复制清风源地址
+                📋 复制精选最好源地址
               </button>
               <button class="btn btn-secondary" style="flex:1; justify-content:center;" onclick="copyM3uUrl()">
-                📋 复制 M3U 地址
+                📋 复制 M3U 最优源
               </button>
             </div>
           </div>
@@ -1430,12 +1569,48 @@
               <button id="btnTvAudio" class="btn btn-secondary tv-ctrl-btn" onclick="event.stopPropagation(); toggleTvAudio()" title="开启/关闭声音">
                 🔇 开启声音
               </button>
+              
+              <!-- 清晰度快速选择按钮与下拉菜单 -->
+              <div style="position:relative; display:inline-block;">
+                <button id="btnTvQuality" class="btn btn-secondary tv-ctrl-btn" onclick="event.stopPropagation(); toggleQualityMenu()" title="快速选择清晰度 (快捷键: Q 或 遥控器菜单键)">
+                  ⚡ 流畅 (480P)
+                </button>
+                <div id="tvQualityMenu" class="tv-quality-menu" onclick="event.stopPropagation()">
+                  <div class="quality-menu-header">
+                    <span>📺 快速选择清晰度</span>
+                    <span style="cursor:pointer; color:#94a3b8;" onclick="toggleQualityMenu(false)">✕</span>
+                  </div>
+                  <div class="quality-menu-item" id="qOpt1080" onclick="setPlaybackQuality('1080P')">
+                    <div class="q-main">💎 超清 1080P</div>
+                    <div class="q-sub">高清细腻 · 适合大屏光纤</div>
+                  </div>
+                  <div class="quality-menu-item" id="qOpt720" onclick="setPlaybackQuality('720P')">
+                    <div class="q-main">📺 高清 720P</div>
+                    <div class="q-sub">画质清晰 · 兼顾流畅体验</div>
+                  </div>
+                  <div class="quality-menu-item active" id="qOpt480" onclick="setPlaybackQuality('480P')">
+                    <div class="q-main">⚡ 标清/流畅 480P <span class="badge-rec">防卡推荐</span></div>
+                    <div class="q-sub">低延迟秒开 · 顺畅流利不卡顿</div>
+                  </div>
+                  <div class="quality-menu-item" id="qOptAuto" onclick="setPlaybackQuality('auto')">
+                    <div class="q-main">🤖 智能自适应 (Auto)</div>
+                    <div class="q-sub">根据网络状况自适应调节</div>
+                  </div>
+                </div>
+              </div>
+
               <button id="btnTvGuide" class="btn btn-secondary tv-ctrl-btn" onclick="event.stopPropagation(); toggleChannelDrawer()" title="打开/关闭电视频道单 (快捷键: OK / Enter)">
                 📋 频道单
               </button>
               <button id="btnTvFullscreen" class="btn btn-secondary tv-ctrl-btn" onclick="event.stopPropagation(); toggleTvFullscreen()" title="全屏画面 (快捷键: F / 双击画面)">
                 ⛶ 全屏
               </button>
+            </div>
+
+            <!-- 电视大屏中心浮动 Toast 提示 -->
+            <div id="tvToastNotice" class="tv-toast-notice">
+              <span id="tvToastIcon">⚡</span>
+              <span id="tvToastText">已切换为：标清/流畅 480P (顺畅流利模式)</span>
             </div>
 
             <!-- 电视端悬浮抽屉式频道列表 -->
@@ -1454,7 +1629,7 @@
                 <span class="tv-drawer-tab" onclick="setDrawerGroup('地方频道')">地方台</span>
               </div>
               <div class="tv-drawer-list" id="tvDrawerList">
-                <!-- 动态注入各电视台 -->
+                <!-- 动态注入各电视台 (默认仅显单台最好信号源) -->
               </div>
             </div>
 
@@ -1494,18 +1669,22 @@
               <button class="d-center" onclick="remoteConfirm()">OK</button>
             </div>
 
-            <div style="display:flex; justify-content:center; gap:8px; margin-top:10px;">
+            <div style="display:flex; justify-content:center; gap:8px; margin-top:10px; flex-wrap:wrap;">
+              <button id="btnRemoteQuality" class="btn btn-secondary" style="font-size:0.75rem; padding:4px 10px; background:rgba(30,41,59,0.9); border:1px solid #38bdf8; color:#38bdf8; border-radius:6px; cursor:pointer;" onclick="cycleQuality()" title="快速切换清晰度 (快捷键: Q 或 菜单键)">
+                ⚡ 快速选清晰度
+              </button>
               <button id="btnRemoteGuide" class="btn btn-secondary" style="font-size:0.75rem; padding:4px 10px; background:rgba(30,41,59,0.9); border:1px solid #334155; border-radius:6px; cursor:pointer;" onclick="toggleChannelDrawer()" title="打开/关闭频道单 (快捷键: OK / Enter)">
-                📋 频道节目单
+                📋 频道单
               </button>
               <button id="btnRemoteFullscreen" class="btn btn-secondary" style="font-size:0.75rem; padding:4px 10px; background:rgba(30,41,59,0.9); border:1px solid #334155; border-radius:6px; cursor:pointer;" onclick="toggleTvFullscreen()" title="切换电视全屏播放 (快捷键: F)">
-                ⛶ 切换全屏显示
+                ⛶ 全屏
               </button>
             </div>
 
             <div class="remote-helper">
               <strong>💡 遥控指引 (亦支持电脑键盘)</strong><br>
-              键盘 <strong>[↑ / ↓]</strong> 切换频道 &nbsp;•&nbsp; 键盘 <strong>[← / →]</strong> 切换线路源 &nbsp;•&nbsp; <strong>[F]</strong> 或<strong>双击画面</strong>全屏
+              键盘 <strong>[↑ / ↓]</strong> 切换频道 &nbsp;•&nbsp; 键盘 <strong>[← / →]</strong> 切换线路源<br>
+              键盘 <strong>[Q]</strong> 或<strong>遥控器菜单键</strong> 快速切换清晰度 &nbsp;•&nbsp; <strong>[F]</strong> 或<strong>双击画面</strong>全屏
             </div>
           </div>
         </div>
@@ -2162,6 +2341,169 @@ CHC动作电影,http://38.75.136.137:98/gslb/dsdqbv/chcdz.m3u8?auth=test20251009
     let currentDrawerGroupFilter = 'ALL';
     let currentDrawerSearchFilter = '';
     let isChannelDrawerOpen = false;
+    let isTableOnlyBest = true; // 默认情况下只显一个信号源，最好的
+    let currentQuality = '480P'; // 默认提供流畅防卡画质 (可随时快速切换)
+    let isQualityMenuOpen = false;
+    let toastTimer = null;
+
+    // 清晰度配置映射表
+    const QUALITY_CONFIG = {
+      '1080P': { id: '1080P', name: '超清 (1080P)', icon: '💎', notice: '💎 已切换为：超清 (1080P) - 臻彩画质模式' },
+      '720P':  { id: '720P',  name: '高清 (720P)', icon: '📺', notice: '📺 已切换为：高清 (720P) - 均衡画质模式' },
+      '480P':  { id: '480P',  name: '流畅 (480P)', icon: '⚡', notice: '⚡ 已切换为：标清/流畅 (480P) - 顺畅流利防卡模式' },
+      'auto':  { id: 'auto',  name: '自动 (Auto)', icon: '🤖', notice: '🤖 已切换为：智能自适应网络画质' }
+    };
+
+    // 切换清晰度选择菜单浮层
+    function toggleQualityMenu(forcedState) {
+      const menu = document.getElementById('tvQualityMenu');
+      if (!menu) return;
+      isQualityMenuOpen = (typeof forcedState === 'boolean') ? forcedState : !isQualityMenuOpen;
+      menu.classList.toggle('open', isQualityMenuOpen);
+    }
+
+    // 电视大屏浮动 Toast 提示
+    function showTvToast(icon, text) {
+      const toast = document.getElementById('tvToastNotice');
+      const iconEl = document.getElementById('tvToastIcon');
+      const textEl = document.getElementById('tvToastText');
+      if (!toast) return;
+      if (iconEl) iconEl.innerText = icon;
+      if (textEl) textEl.innerText = text;
+      toast.classList.add('show');
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2600);
+    }
+
+    // 手动快速切换清晰度 (循环切: 超清 ➔ 高清 ➔ 流畅 ➔ 自动)
+    function cycleQuality() {
+      const sequence = ['1080P', '720P', '480P', 'auto'];
+      const currentIndex = sequence.indexOf(currentQuality);
+      const nextQuality = sequence[(currentIndex + 1) % sequence.length];
+      setPlaybackQuality(nextQuality);
+    }
+
+    // 设置画质与流畅防卡缓冲策略
+    function setPlaybackQuality(quality) {
+      currentQuality = quality;
+      toggleQualityMenu(false);
+
+      const qInfo = QUALITY_CONFIG[quality] || QUALITY_CONFIG['480P'];
+      const btn = document.getElementById('btnTvQuality');
+      if (btn) btn.innerText = `${qInfo.icon} ${qInfo.name}`;
+
+      // 更新清晰度菜单项激活态
+      document.querySelectorAll('.quality-menu-item').forEach(it => it.classList.remove('active'));
+      const activeId = `qOpt${quality.charAt(0).toUpperCase() + quality.slice(1)}`;
+      const activeEl = document.getElementById(activeId);
+      if (activeEl) activeEl.classList.add('active');
+
+      // 弹出电视大屏提示
+      showTvToast(qInfo.icon, qInfo.notice);
+
+      // 应用到播放器与 HLS 流
+      applyQualityToPlayer(quality);
+    }
+
+    function applyQualityToPlayer(quality) {
+      const statusEl = document.getElementById('tvPlaybackStatus');
+      const osdTop = document.getElementById('tvOsdInfo');
+      const ch = MOCK_CHANNELS[currentChannelIdx];
+      const line = (ch && ch.lines && ch.lines[currentLineIdx]) || { latency: 15.0 };
+
+      if (currentHls) {
+        try {
+          if (quality === 'auto') {
+            currentHls.currentLevel = -1;
+            currentHls.config.maxBufferLength = 15;
+            if (osdTop) osdTop.innerText = `自适应Auto • 延迟 ${line.latency}ms`;
+            if (statusEl) statusEl.innerText = '🤖 智能自适应网络，画质动态调优中';
+          } else if (quality === '480P') {
+            // 顺畅流利防卡模式：选用低分辨率并精简缓冲区
+            if (currentHls.levels && currentHls.levels.length > 0) {
+              let minIdx = 0;
+              let minHeight = 99999;
+              currentHls.levels.forEach((lvl, i) => {
+                const h = lvl.height || 480;
+                if (h < minHeight) { minHeight = h; minIdx = i; }
+              });
+              currentHls.currentLevel = minIdx;
+            }
+            currentHls.config.maxBufferLength = 6; // 降低缓冲堆积，防卡顿
+            currentHls.config.lowLatencyMode = true;
+            if (osdTop) osdTop.innerText = `480P流畅 • 延迟 ${line.latency}ms`;
+            if (statusEl) statusEl.innerText = '🟢 已启用流畅防卡模式 (顺畅流利)';
+          } else if (quality === '720P') {
+            if (currentHls.levels && currentHls.levels.length > 0) {
+              let bestIdx = 0;
+              let diff = 99999;
+              currentHls.levels.forEach((lvl, i) => {
+                const d = Math.abs((lvl.height || 720) - 720);
+                if (d < diff) { diff = d; bestIdx = i; }
+              });
+              currentHls.currentLevel = bestIdx;
+            }
+            currentHls.config.maxBufferLength = 12;
+            if (osdTop) osdTop.innerText = `720P高清 • 延迟 ${line.latency}ms`;
+            if (statusEl) statusEl.innerText = '📺 已切换至 720P 高清模式';
+          } else if (quality === '1080P') {
+            if (currentHls.levels && currentHls.levels.length > 0) {
+              let maxIdx = 0;
+              let maxHeight = 0;
+              currentHls.levels.forEach((lvl, i) => {
+                const h = lvl.height || 1080;
+                if (h > maxHeight) { maxHeight = h; maxIdx = i; }
+              });
+              currentHls.currentLevel = maxIdx;
+            }
+            currentHls.config.maxBufferLength = 20;
+            if (osdTop) osdTop.innerText = `1080P超清 • 延迟 ${line.latency}ms`;
+            if (statusEl) statusEl.innerText = '💎 已切换至 1080P 超清模式';
+          }
+        } catch (err) {
+          console.warn('调整 HLS 清晰度异常:', err);
+        }
+      } else {
+        if (osdTop) {
+          const qName = quality === 'auto' ? '自动' : quality;
+          osdTop.innerText = `${qName} • 延迟 ${line.latency}ms`;
+        }
+      }
+    }
+
+    // 单台最好信号源模式切换开关
+    function toggleTableSourceView() {
+      isTableOnlyBest = !isTableOnlyBest;
+      const btn = document.getElementById('btnTableOnlyBest');
+      const headRow = document.getElementById('channelTableHeadRow');
+      if (btn) {
+        btn.innerText = isTableOnlyBest ? '⭐ 默认只显单台最好信号源 (已开启)' : '📑 显示全部备用线路模式';
+        btn.style.borderColor = isTableOnlyBest ? '#10b981' : '#64748b';
+        btn.style.color = isTableOnlyBest ? '#34d399' : '#94a3b8';
+      }
+      if (headRow) {
+        if (isTableOnlyBest) {
+          headRow.innerHTML = `
+            <th>频道名称</th>
+            <th>分组</th>
+            <th>最好信号源 (极速第一)</th>
+            <th>画质清晰度</th>
+            <th>操作</th>
+          `;
+        } else {
+          headRow.innerHTML = `
+            <th>频道名称</th>
+            <th>分组</th>
+            <th>优选线路 1 (最快)</th>
+            <th>优选线路 2 (备用)</th>
+            <th>操作</th>
+          `;
+        }
+      }
+      renderResultsTable();
+    }
 
     // 动态更新步骤 3 顶部的分类计数胶囊
     function updateGroupPills() {
@@ -2198,7 +2540,7 @@ CHC动作电影,http://38.75.136.137:98/gslb/dsdqbv/chcdz.m3u8?auth=test20251009
       renderResultsTable();
     }
 
-    // 渲染结果看板表格
+    // 渲染结果看板表格 (默认仅显单台最好信号源，可一键展开全部)
     function renderResultsTable() {
       const tbody = document.getElementById('channelsResultBody');
       if (!tbody) return;
@@ -2222,32 +2564,59 @@ CHC动作电影,http://38.75.136.137:98/gslb/dsdqbv/chcdz.m3u8?auth=test20251009
 
       filtered.forEach(({ ch, originalIdx }) => {
         const tr = document.createElement('tr');
-        const l1 = ch.lines[0] || { name: '默认', latency: 15.0 };
+        const l1 = ch.lines[0] || { name: '默认', latency: 15.0, quality: '1080P' };
         const l2 = ch.lines[1];
         const isCurrentPlaying = (originalIdx === currentChannelIdx);
 
-        tr.innerHTML = `
-          <td>
-            <strong style="${isCurrentPlaying ? 'color:#38bdf8;' : ''}">${ch.name}</strong>
-            ${isCurrentPlaying ? '<span style="font-size:0.7rem; color:#ef4444; margin-left:4px;">● 正在播放</span>' : ''}
-          </td>
-          <td><span class="badge-group">${ch.group || '未分组'}</span></td>
-          <td>
-            <span class="badge-latency latency-green">${l1.latency}ms</span>
-            <span style="font-size:0.75rem; color:#94a3b8; margin-left:4px;">${l1.name}</span>
-          </td>
-          <td>
-            ${l2 ? `
-              <span class="badge-latency ${l2.latency < 40 ? 'latency-green' : 'latency-orange'}">${l2.latency}ms</span>
-              <span style="font-size:0.75rem; color:#94a3b8; margin-left:4px;">${l2.name}</span>
-            ` : '<span style="color:#64748b; font-size:0.75rem;">(单极速线路)</span>'}
-          </td>
-          <td>
-            <button class="btn btn-secondary" style="padding:2px 8px; font-size:0.75rem;" onclick="playChannelByIdx(${originalIdx})">
-              📺 在电视上试播
-            </button>
-          </td>
-        `;
+        if (isTableOnlyBest) {
+          // 默认单台最好信号源模式：清爽直观，每个电台仅展示最优第一线路
+          const backupLinesCount = Math.max(0, ch.lines.length - 1);
+          tr.innerHTML = `
+            <td>
+              <strong style="${isCurrentPlaying ? 'color:#38bdf8;' : ''}">${ch.name}</strong>
+              ${isCurrentPlaying ? '<span style="font-size:0.7rem; color:#ef4444; margin-left:4px;">● 正在播放</span>' : ''}
+            </td>
+            <td><span class="badge-group">${ch.group || '未分组'}</span></td>
+            <td>
+              <span class="badge-latency latency-green">${l1.latency}ms</span>
+              <span class="badge-best-source">⭐ 最优第一源</span>
+              <span style="font-size:0.75rem; color:#94a3b8; margin-left:4px;">${l1.name}</span>
+              ${backupLinesCount > 0 ? `<span style="font-size:0.7rem; color:#64748b; margin-left:6px;" title="有 ${backupLinesCount} 条备用源，可按左右键切换">(+${backupLinesCount}条备用源)</span>` : ''}
+            </td>
+            <td>
+              <span class="badge-quality-tag" onclick="cycleQuality()" style="cursor:pointer;" title="点击快速切换清晰度">${l1.quality || '1080P'} ▾</span>
+            </td>
+            <td>
+              <button class="btn btn-primary" style="padding:2px 10px; font-size:0.75rem;" onclick="playChannelByIdx(${originalIdx})">
+                📺 试播最好源
+              </button>
+            </td>
+          `;
+        } else {
+          // 完整线路模式
+          tr.innerHTML = `
+            <td>
+              <strong style="${isCurrentPlaying ? 'color:#38bdf8;' : ''}">${ch.name}</strong>
+              ${isCurrentPlaying ? '<span style="font-size:0.7rem; color:#ef4444; margin-left:4px;">● 正在播放</span>' : ''}
+            </td>
+            <td><span class="badge-group">${ch.group || '未分组'}</span></td>
+            <td>
+              <span class="badge-latency latency-green">${l1.latency}ms</span>
+              <span style="font-size:0.75rem; color:#94a3b8; margin-left:4px;">${l1.name}</span>
+            </td>
+            <td>
+              ${l2 ? `
+                <span class="badge-latency ${l2.latency < 40 ? 'latency-green' : 'latency-orange'}">${l2.latency}ms</span>
+                <span style="font-size:0.75rem; color:#94a3b8; margin-left:4px;">${l2.name}</span>
+              ` : '<span style="color:#64748b; font-size:0.75rem;">(单极速线路)</span>'}
+            </td>
+            <td>
+              <button class="btn btn-secondary" style="padding:2px 8px; font-size:0.75rem;" onclick="playChannelByIdx(${originalIdx})">
+                📺 在电视上试播
+              </button>
+            </td>
+          `;
+        }
         tbody.appendChild(tr);
       });
     }
@@ -2278,6 +2647,7 @@ CHC动作电影,http://38.75.136.137:98/gslb/dsdqbv/chcdz.m3u8?auth=test20251009
       renderChannelDrawer();
     }
 
+    // 电视端抽屉频道单：默认仅显单台最好信号源，杜绝冗余
     function renderChannelDrawer() {
       const listEl = document.getElementById('tvDrawerList');
       const countEl = document.getElementById('drawerChannelCount');
@@ -2312,15 +2682,16 @@ CHC动作电影,http://38.75.136.137:98/gslb/dsdqbv/chcdz.m3u8?auth=test20251009
           toggleChannelDrawer(false);
         };
 
-        const linesCount = ch.lines ? ch.lines.length : 1;
+        const bestLine = (ch.lines && ch.lines[0]) || { latency: 15.0, quality: '1080P' };
         item.innerHTML = `
           <div style="display:flex; align-items:center; gap:8px;">
             <span style="font-family:monospace; color:${isActive ? '#38bdf8' : '#64748b'}; font-size:0.72rem;">${ch.num || (idx+1)}</span>
-            <span>${ch.name}</span>
+            <span style="font-weight:${isActive ? '700' : '500'};">${ch.name}</span>
           </div>
-          <div style="display:flex; align-items:center; gap:6px;">
-            <span style="font-size:0.68rem; color:#94a3b8; background:rgba(255,255,255,0.08); padding:1px 5px; border-radius:3px;">${ch.group || '常规'}</span>
-            <span style="font-size:0.68rem; color:#10b981;">${linesCount}线</span>
+          <div style="display:flex; align-items:center; gap:5px;">
+            <span class="badge-latency latency-green" style="font-size:0.62rem; padding:1px 5px;">${bestLine.latency}ms</span>
+            <span class="badge-quality-tag" style="font-size:0.62rem;">${bestLine.quality || '720P'}</span>
+            <span class="badge-best-source" style="font-size:0.62rem;">⭐最优</span>
           </div>
         `;
         listEl.appendChild(item);
@@ -2863,6 +3234,7 @@ CHC动作电影,http://38.75.136.137:98/gslb/dsdqbv/chcdz.m3u8?auth=test20251009
         currentHls.on(Hls.Events.MANIFEST_PARSED, () => {
           hlsRetryCount = 0;
           video.style.opacity = '1';
+          applyQualityToPlayer(currentQuality);
           attemptPlay();
 
           osdFadeTimer = setTimeout(() => {
@@ -2898,6 +3270,7 @@ CHC动作电影,http://38.75.136.137:98/gslb/dsdqbv/chcdz.m3u8?auth=test20251009
         video.src = proxyUrl;
         video.play().then(() => {
           video.style.opacity = '1';
+          applyQualityToPlayer(currentQuality);
           statusEl.innerText = '🔴 实时卫星直播中 (LIVE)';
         }).catch(e => {
           playBroadcastVideo(ch.name);
@@ -2946,7 +3319,7 @@ CHC动作电影,http://38.75.136.137:98/gslb/dsdqbv/chcdz.m3u8?auth=test20251009
       toggleChannelDrawer();
     }
 
-    // 绑定物理键盘的方向键与全屏快捷键
+    // 绑定物理键盘的方向键、清晰度切换与全屏快捷键
     window.addEventListener('keydown', (e) => {
       // 避免输入框或文本域中的键盘输入被拦截
       const tag = document.activeElement ? document.activeElement.tagName : '';
@@ -2961,15 +3334,29 @@ CHC动作电影,http://38.75.136.137:98/gslb/dsdqbv/chcdz.m3u8?auth=test20251009
       if (e.code === "ArrowRight") remoteNextLine();
       if (e.code === "Enter") remoteConfirm();
 
+      // Q 键快速切换清晰度 (超清 ➔ 高清 ➔ 流畅 ➔ 自动)
+      if (e.code === "KeyQ" || e.key === "q" || e.key === "Q") {
+        e.preventDefault();
+        cycleQuality();
+      }
+
+      // M 键呼出/关闭清晰度菜单
+      if (e.code === "KeyM" || e.key === "m" || e.key === "M") {
+        e.preventDefault();
+        toggleQualityMenu();
+      }
+
       // F 键快捷切换画面全屏
       if (e.code === "KeyF" || e.key === "f" || e.key === "F") {
         e.preventDefault();
         toggleTvFullscreen();
       }
 
-      // Esc 键退出抽屉或全屏
+      // Esc 键退出抽屉、菜单或全屏
       if (e.key === "Escape") {
-        if (isChannelDrawerOpen) {
+        if (isQualityMenuOpen) {
+          toggleQualityMenu(false);
+        } else if (isChannelDrawerOpen) {
           toggleChannelDrawer(false);
         } else if (isTvFullscreen()) {
           exitTvFullscreen();
@@ -2984,7 +3371,7 @@ CHC动作电影,http://38.75.136.137:98/gslb/dsdqbv/chcdz.m3u8?auth=test20251009
         modal.style.display = 'flex';
         const origin = window.location.origin || 'http://localhost:8088';
         const modalSub = document.getElementById('modalSubUrlField');
-        if (modalSub) modalSub.value = origin + '/live.txt';
+        if (modalSub) modalSub.value = origin + '/live.txt?best=1';
       }
     }
 
@@ -3005,7 +3392,7 @@ CHC动作电影,http://38.75.136.137:98/gslb/dsdqbv/chcdz.m3u8?auth=test20251009
         input.select();
         if (navigator.clipboard) {
           navigator.clipboard.writeText(input.value).then(() => {
-            alert('已成功复制电视订阅直链！在小米电视【小薇直播】->【设置】->【网络自定义】填入即可。');
+            alert('已成功复制电视订阅直链 (默认单台最好源)！在小米电视【小薇直播】->【设置】->【网络自定义】填入即可。');
           }).catch(() => {
             document.execCommand('copy');
             alert('已复制电视订阅直链！');
@@ -3019,12 +3406,14 @@ CHC动作电影,http://38.75.136.137:98/gslb/dsdqbv/chcdz.m3u8?auth=test20251009
 
     // 初始化
     window.onload = () => {
-      // 动态更新订阅 URL 字段
+      // 动态更新订阅 URL 字段 (默认输出单台最优信号源)
       const origin = window.location.origin || 'http://localhost:8088';
       const subTxt = document.getElementById('subUrlField');
       const subM3u = document.getElementById('subM3uField');
-      if (subTxt) subTxt.value = origin + '/live.txt';
-      if (subM3u) subM3u.value = origin + '/live.m3u';
+      const subFull = document.getElementById('subFullUrlField');
+      if (subTxt) subTxt.value = origin + '/live.txt?best=1';
+      if (subM3u) subM3u.value = origin + '/live.m3u?best=1';
+      if (subFull) subFull.value = origin + '/live.txt';
 
       // 启动动态广播视觉引擎
       startCanvasBroadcastAnimation();
@@ -3034,10 +3423,11 @@ CHC动作电影,http://38.75.136.137:98/gslb/dsdqbv/chcdz.m3u8?auth=test20251009
       renderResultsTable();
       renderChannelDrawer();
       renderXiaoWeiExport();
+      setPlaybackQuality(currentQuality);
       updateTvDisplay();
       fetchSystemStatus();
 
-      // 从后台自动加载全量频道清单 (200+ 电视台)
+      // 从后台自动加载全量频道清单
       loadChannelsFromBackend();
 
       // 每 15 秒轮询一次状态
