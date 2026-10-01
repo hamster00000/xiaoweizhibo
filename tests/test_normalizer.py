@@ -62,6 +62,13 @@ class TestChannelNormalizer(unittest.TestCase):
         self.assertEqual(self.normalizer.match_group("湖南卫视"), "卫视频道")
         self.assertEqual(self.normalizer.match_group("凤凰中文"), "其他频道")
 
+    def test_detect_quality(self):
+        self.assertEqual(ChannelNormalizer.detect_quality("CCTV-1 4K超高清", "http://test/4k.m3u8"), "4K")
+        self.assertEqual(ChannelNormalizer.detect_quality("浙江卫视 [1080P]", "http://test/cctv.m3u8"), "1080P")
+        self.assertEqual(ChannelNormalizer.detect_quality("湖南卫视 720P", "http://test/hd.m3u8"), "720P")
+        self.assertEqual(ChannelNormalizer.detect_quality("地方台 标清流畅", "http://test/sd.m3u8"), "480P")
+        self.assertEqual(ChannelNormalizer.detect_quality("未知频道", "http://test/3m1080p/cctv.m3u8"), "1080P")
+
 
 if __name__ == "__main__":
     unittest.main()

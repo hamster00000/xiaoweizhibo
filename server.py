@@ -12,7 +12,7 @@ import sys
 import threading
 import time
 from typing import Optional
-from urllib.parse import urlparse
+from urllib.parse import urlparse, parse_qs
 
 from live_crawler.fetcher import SourceFetcher
 from live_crawler.normalizer import ChannelNormalizer
@@ -38,12 +38,12 @@ class LiveDemoHandler(http.server.SimpleHTTPRequestHandler):
 
         # 1. 清风直播专属订阅源直链
         if parsed.path == "/live.txt":
-            self._handle_live_txt()
+            self._handle_live_txt(parsed)
             return
 
         # 2. 通用标准 M3U 直播源直链
         if parsed.path == "/live.m3u":
-            self._handle_live_m3u()
+            self._handle_live_m3u(parsed)
             return
 
         # 3. 获取服务健康状态与统计指标
@@ -53,7 +53,7 @@ class LiveDemoHandler(http.server.SimpleHTTPRequestHandler):
 
         # 3.1 获取所有有效频道与分组线路
         if parsed.path == "/api/channels":
-            self._handle_channels()
+            self._handle_channels(parsed)
             return
 
         # 3.2 小米电视应用信息与配置
@@ -107,7 +107,7 @@ class LiveDemoHandler(http.server.SimpleHTTPRequestHandler):
 
         self.send_error(404, "Not Found")
 
-    def _handle_live_txt(self):
+    def _handle_live_txt(self, parsed=None):
         txt_path = self._get_output_path("xiaowei_txt", "live_xiaowei.txt")
         if not os.path.exists(txt_path):
             # 若主文件尚未生成，尝试降级读取 demo 样例
@@ -121,9 +121,37 @@ class LiveDemoHandler(http.server.SimpleHTTPRequestHandler):
                 self.wfile.write("直播源尚未生成，请稍后刷新或在控制台触发更新任务。".encode("utf-8"))
                 return
 
+        only_best = False
+        if parsed and parsed.query:
+            qs = parse_qs(parsed.query)
+            only_best = qs.get("only_best", ["0"])[0].lower() in ["1", "true", "yes"] or \
+                        qs.get("best", ["0"])[0].lower() in ["1", "true", "yes"] or \
+                        qs.get("single", ["0"])[0].lower() in ["1", "true", "yes"]
+
         try:
-            with open(txt_path, "rb") as f:
-                content = f.read()
+            with open(txt_path, "r", encoding="utf-8", errors="replace") as f:
+                raw_lines = f.readlines()
+
+            if only_best:
+                filtered_lines = []
+                seen_channel_in_group = set()
+                for line in raw_lines:
+                    sline = line.strip()
+                    if not sline:
+                        filtered_lines.append(line)
+                        continue
+                    if "#genre#" in sline:
+                        seen_channel_in_group.clear()
+                        filtered_lines.append(line)
+                    elif "," in sline:
+                        ch_name = sline.split(",", 1)[0].strip()
+                        if ch_name not in seen_channel_in_group:
+                            seen_channel_in_group.add(ch_name)
+                            filtered_lines.append(line)
+                content = "".join(filtered_lines).encode("utf-8")
+            else:
+                content = "".join(raw_lines).encode("utf-8")
+
             self.send_response(200)
             self.send_header("Content-Type", "text/plain; charset=utf-8")
             self.send_header("Content-Length", str(len(content)))
@@ -133,7 +161,7 @@ class LiveDemoHandler(http.server.SimpleHTTPRequestHandler):
         except Exception as e:
             self.send_error(500, f"Error reading live.txt: {e}")
 
-    def _handle_live_m3u(self):
+    def _handle_live_m3u(self, parsed=None):
         m3u_path = self._get_output_path("standard_m3u", "live.m3u")
         if not os.path.exists(m3u_path):
             self.send_response(404)
@@ -142,9 +170,40 @@ class LiveDemoHandler(http.server.SimpleHTTPRequestHandler):
             self.wfile.write("M3U 播放列表尚未生成，请稍后刷新。".encode("utf-8"))
             return
 
+        only_best = False
+        if parsed and parsed.query:
+            qs = parse_qs(parsed.query)
+            only_best = qs.get("only_best", ["0"])[0].lower() in ["1", "true", "yes"] or \
+                        qs.get("best", ["0"])[0].lower() in ["1", "true", "yes"] or \
+                        qs.get("single", ["0"])[0].lower() in ["1", "true", "yes"]
+
         try:
-            with open(m3u_path, "rb") as f:
-                content = f.read()
+            with open(m3u_path, "r", encoding="utf-8", errors="replace") as f:
+                raw_lines = f.readlines()
+
+            if only_best:
+                filtered_lines = []
+                seen_channel = set()
+                i = 0
+                while i < len(raw_lines):
+                    line = raw_lines[i]
+                    if line.startswith("#EXTINF"):
+                        # 提取 tvg-name 或频道名称
+                        next_line = raw_lines[i + 1] if i + 1 < len(raw_lines) else ""
+                        ch_name = line.split(",")[-1].strip().split(" (")[0].strip()
+                        if ch_name not in seen_channel:
+                            seen_channel.add(ch_name)
+                            filtered_lines.append(line)
+                            if next_line:
+                                filtered_lines.append(next_line)
+                        i += 2
+                    else:
+                        filtered_lines.append(line)
+                        i += 1
+                content = "".join(filtered_lines).encode("utf-8")
+            else:
+                content = "".join(raw_lines).encode("utf-8")
+
             self.send_response(200)
             self.send_header("Content-Type", "application/x-mpegurl; charset=utf-8")
             self.send_header("Content-Length", str(len(content)))
@@ -208,12 +267,19 @@ class LiveDemoHandler(http.server.SimpleHTTPRequestHandler):
             "message": "已在后台启动新一轮直播源抓取与测速管线"
         })
 
-    def _handle_channels(self):
+    def _handle_channels(self, parsed=None):
         txt_path = self._get_output_path("xiaowei_txt", "live_xiaowei.txt")
         if not os.path.exists(txt_path):
             fallback = os.path.join(BASE_DIR, "output", "demo_xiaowei.txt")
             if os.path.exists(fallback):
                 txt_path = fallback
+
+        only_best = False
+        if parsed and parsed.query:
+            qs = parse_qs(parsed.query)
+            only_best = qs.get("only_best", ["0"])[0].lower() in ["1", "true", "yes"] or \
+                        qs.get("best", ["0"])[0].lower() in ["1", "true", "yes"] or \
+                        qs.get("single", ["0"])[0].lower() in ["1", "true", "yes"]
 
         channels_dict = {}
         ordered_names = []
@@ -248,15 +314,26 @@ class LiveDemoHandler(http.server.SimpleHTTPRequestHandler):
                             channels_dict[name]["lines"].append({
                                 "name": f"线路 {line_count}",
                                 "url": url,
-                                "latency": round(15.0 + (line_count * 12.5) % 60, 1)
+                                "latency": round(15.0 + (line_count * 12.5) % 60, 1),
+                                "is_best": (line_count == 1),
+                                "quality": ChannelNormalizer.detect_quality(name, url)
                             })
             except Exception as e:
                 print(f"[!] 解析 live.txt 失败: {e}", file=sys.stderr)
 
-        channels = [channels_dict[name] for name in ordered_names]
+        channels = []
+        for name in ordered_names:
+            ch = channels_dict[name]
+            if ch["lines"]:
+                ch["best_line"] = ch["lines"][0]
+                if only_best:
+                    ch["lines"] = [ch["lines"][0]]
+            channels.append(ch)
+
         self._send_json(200, {
             "code": 0,
             "total": len(channels),
+            "only_best": only_best,
             "channels": channels
         })
 
@@ -294,7 +371,8 @@ class LiveDemoHandler(http.server.SimpleHTTPRequestHandler):
                         "name": it.name,
                         "group": it.group,
                         "url": it.url,
-                        "latency_ms": it.latency_ms
+                        "latency_ms": it.latency_ms,
+                        "quality": getattr(it, "quality", "") or ChannelNormalizer.detect_quality(it.raw_name, it.url)
                     }
                     for it in items
                 ]

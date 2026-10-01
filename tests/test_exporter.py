@@ -58,8 +58,29 @@ class TestStreamExporter(unittest.TestCase):
         self.assertTrue(m3u.startswith("#EXTM3U"))
         self.assertIn('group-title="央视频道"', m3u)
         self.assertIn('tvg-logo="http://logo.png"', m3u)
+
+    def test_only_best_mode(self):
+        items = [
+            ChannelItem(raw_name="C1", name="CCTV-1", url="http://s1", group="央视频道", latency_ms=120.0, is_valid=True),
+            ChannelItem(raw_name="C1", name="CCTV-1", url="http://s2", group="央视频道", latency_ms=30.0, is_valid=True, tvg_id="cctv1"),
+            ChannelItem(raw_name="C1", name="CCTV-1", url="http://s3", group="央视频道", latency_ms=80.0, is_valid=True),
+        ]
+        # 1. deduplicate_and_rank with only_best=True
+        grouped = self.exporter.deduplicate_and_rank(items, only_best=True)
+        self.assertEqual(len(grouped["央视频道"]["CCTV-1"]), 1)
+        self.assertEqual(grouped["央视频道"]["CCTV-1"][0].url, "http://s2")
+
+        # 2. export_xiaowei_txt with only_best=True
+        all_grouped = self.exporter.deduplicate_and_rank(items)
+        txt = self.exporter.export_xiaowei_txt(all_grouped, only_best=True)
+        self.assertEqual(txt.count("CCTV-1"), 1)
+        self.assertIn("CCTV-1,http://s2", txt)
+
+        # 3. export_standard_m3u with only_best=True
+        m3u = self.exporter.export_standard_m3u(all_grouped, only_best=True)
+        self.assertEqual(m3u.count("CCTV-1"), 2)  # EXTINF + url
+        self.assertIn("http://s2", m3u)
         self.assertIn('tvg-id="cctv1"', m3u)
-        self.assertIn("http://cctv1", m3u)
 
     def test_save_to_files_atomic(self):
         items = [

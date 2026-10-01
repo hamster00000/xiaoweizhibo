@@ -119,3 +119,19 @@ class ChannelNormalizer:
         if not raw or raw in ["其他", "其它", "其他频道"]:
             return self.match_group(normalized_name)
         return raw
+
+    @staticmethod
+    def detect_quality(raw_name: str, url: str = "") -> str:
+        """从原始名称或 URL 中智能探测清晰度 (4K, 1080P, 720P, 480P)"""
+        target = f"{raw_name} {url}".lower()
+        if any(k in target for k in ["4k", "8k", "2160p", "uhd"]):
+            return "4K"
+        if any(k in target for k in ["1080p", "1080", "fhd", "超清", "蓝光", "全高清", "50fps"]):
+            return "1080P"
+        if any(k in target for k in ["720p", "720", "hd", "高清"]):
+            return "720P"
+        if any(k in target for k in ["480p", "576p", "360p", "sd", "标清", "流畅", "省流"]):
+            return "480P"
+        if "cctv" in target or "卫视" in target:
+            return "1080P"
+        return "720P"

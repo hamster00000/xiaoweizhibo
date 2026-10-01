@@ -1,7 +1,7 @@
 import os
 import re
 from collections import defaultdict
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 from live_crawler.fetcher import ChannelItem
 
 
@@ -25,14 +25,18 @@ class StreamExporter:
         "陕西卫视", "贵州卫视", "云南卫视", "广西卫视", "海南卫视"
     ]
 
-    def __init__(self, max_lines_per_channel: int = 3):
+    def __init__(self, max_lines_per_channel: int = 3, only_best: bool = False):
         self.max_lines_per_channel = max_lines_per_channel
+        self.only_best = only_best
 
-    def deduplicate_and_rank(self, items: List[ChannelItem]) -> Dict[str, Dict[str, List[ChannelItem]]]:
+    def deduplicate_and_rank(self, items: List[ChannelItem], only_best: Optional[bool] = None) -> Dict[str, Dict[str, List[ChannelItem]]]:
         """
         按 [分组 -> 频道名称] 分类去重，并按延迟从小到大保留最优的多条线路
         结构: { group_name: { channel_name: [ChannelItem, ...] } }
         """
+        is_only_best = self.only_best if only_best is None else only_best
+        line_limit = 1 if is_only_best else self.max_lines_per_channel
+
         grouped: Dict[str, Dict[str, List[ChannelItem]]] = defaultdict(lambda: defaultdict(list))
         seen_urls = set()
 
@@ -52,7 +56,7 @@ class StreamExporter:
         for group, channels in grouped.items():
             for ch_name, lines in channels.items():
                 lines.sort(key=lambda x: (x.latency_ms is None, x.latency_ms or 99999))
-                grouped[group][ch_name] = lines[:self.max_lines_per_channel]
+                grouped[group][ch_name] = lines[:line_limit]
 
         return grouped
 
@@ -81,8 +85,8 @@ class StreamExporter:
 
         return items_list
 
-    def export_xiaowei_txt(self, grouped_channels: Dict[str, Dict[str, List[ChannelItem]]]) -> str:
-        """生成小薇直播专用的分类 TXT 格式"""
+    def export_xiaowei_txt(self, grouped_channels: Dict[str, Dict[str, List[ChannelItem]]], only_best: bool = False) -> str:
+        """生成小薇直播专用的分类 TXT 格式，支持单台仅保留最优单源"""
         lines: List[str] = []
         # 预设首选分组顺序
         group_priority = ["央视频道", "卫视频道", "地方频道"]
@@ -94,14 +98,15 @@ class StreamExporter:
             lines.append(f"{group},#genre#")
             sorted_channels = self._sort_channels(group, grouped_channels[group])
             for ch_name, channel_lines in sorted_channels:
-                for line in channel_lines:
+                lines_to_export = channel_lines[:1] if (only_best or self.only_best) else channel_lines
+                for line in lines_to_export:
                     lines.append(f"{ch_name},{line.url}")
             lines.append("")  # 分组间留空行更易阅读
 
         return "\n".join(lines).strip() + "\n"
 
-    def export_standard_m3u(self, grouped_channels: Dict[str, Dict[str, List[ChannelItem]]], epg_url: str = "https://live.fanmingming.com/e.xml") -> str:
-        """生成通用 M3U 播放列表格式"""
+    def export_standard_m3u(self, grouped_channels: Dict[str, Dict[str, List[ChannelItem]]], epg_url: str = "https://live.fanmingming.com/e.xml", only_best: bool = False) -> str:
+        """生成通用 M3U 播放列表格式，支持单台仅保留最优单源"""
         lines = [f'#EXTM3U x-tvg-url="{epg_url}"']
         group_priority = ["央视频道", "卫视频道", "地方频道"]
         all_groups = group_priority + [g for g in grouped_channels.keys() if g not in group_priority]
@@ -111,8 +116,9 @@ class StreamExporter:
                 continue
             sorted_channels = self._sort_channels(group, grouped_channels[group])
             for ch_name, channel_lines in sorted_channels:
-                for idx, line in enumerate(channel_lines):
-                    display_name = ch_name if len(channel_lines) == 1 else f"{ch_name} (线路{idx+1})"
+                lines_to_export = channel_lines[:1] if (only_best or self.only_best) else channel_lines
+                for idx, line in enumerate(lines_to_export):
+                    display_name = ch_name if len(lines_to_export) == 1 else f"{ch_name} (线路{idx+1})"
                     logo_val = line.tvg_logo or getattr(line, "logo", "")
                     logo_attr = f' tvg-logo="{logo_val}"' if logo_val else ""
                     id_attr = f' tvg-id="{line.tvg_id}"' if line.tvg_id else ""

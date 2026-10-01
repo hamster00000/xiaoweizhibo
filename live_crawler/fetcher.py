@@ -18,6 +18,7 @@ class ChannelItem:
     latency_ms: Optional[float] = None
     is_valid: bool = False
     source_origin: str = ""
+    quality: str = ""
 
     def __init__(
         self,
@@ -30,7 +31,8 @@ class ChannelItem:
         logo: str = "",
         latency_ms: Optional[float] = None,
         is_valid: bool = False,
-        source_origin: str = ""
+        source_origin: str = "",
+        quality: str = ""
     ):
         self.raw_name = raw_name
         self.name = name
@@ -42,6 +44,7 @@ class ChannelItem:
         self.latency_ms = latency_ms
         self.is_valid = is_valid
         self.source_origin = source_origin
+        self.quality = quality or ChannelNormalizer.detect_quality(raw_name, url)
 
     @property
     def logo(self) -> str:

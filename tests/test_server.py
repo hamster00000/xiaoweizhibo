@@ -206,6 +206,27 @@ CCTV-1 综合,http://test.live/cctv1.m3u8
             mock_server.shutdown()
             mock_server.server_close()
 
+    def test_channels_and_live_txt_only_best(self):
+        # 1. 验证 /api/channels?only_best=true 返回单台最优源且带有清晰度
+        req = urllib.request.Request(f"http://127.0.0.1:{TEST_PORT}/api/channels?only_best=true")
+        with urllib.request.urlopen(req) as resp:
+            self.assertEqual(resp.status, 200)
+            data = json.loads(resp.read().decode("utf-8"))
+            self.assertTrue(data.get("only_best"))
+            self.assertGreater(data.get("total"), 0)
+            cctv1 = [c for c in data["channels"] if c["name"] == "CCTV-1"][0]
+            self.assertEqual(len(cctv1["lines"]), 1)
+            self.assertTrue(cctv1["lines"][0]["is_best"])
+            self.assertIn("quality", cctv1["lines"][0])
+            self.assertIn("best_line", cctv1)
+
+        # 2. 验证 /live.txt?best=1 仅返回单台最优源
+        req_txt = urllib.request.Request(f"http://127.0.0.1:{TEST_PORT}/live.txt?best=1")
+        with urllib.request.urlopen(req_txt) as resp:
+            self.assertEqual(resp.status, 200)
+            content = resp.read().decode("utf-8")
+            self.assertEqual(content.count("CCTV-1,"), 1)
+
 
 if __name__ == "__main__":
     unittest.main()
