@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# 小薇直播纯净版 (XiaoWei Live Clean Edition) - 一键运行与管理脚本
+# 跟风直播 (XiaoWei Live Clean Edition) - 一键运行与管理脚本
 # ==============================================================================
 
 set -e
@@ -58,7 +58,7 @@ print_banner() {
     local lan_ip
     lan_ip=$(get_lan_ip)
     echo -e "${CYAN}======================================================================${NC}"
-    echo -e "${BOLD}${GREEN}        📺 小薇直播纯净版 (XiaoWei Live Clean Edition) ${NC}"
+    echo -e "${BOLD}${GREEN}        📺 跟风直播 (XiaoWei Live Clean Edition) ${NC}"
     echo -e "${CYAN}======================================================================${NC}"
     echo -e "  ${BOLD}🖥️  本机控制台:${NC}      ${BLUE}http://localhost:${PORT}${NC}"
     echo -e "  ${BOLD}🌐 局域网控制台:${NC}    ${BLUE}http://${lan_ip}:${PORT}${NC}"

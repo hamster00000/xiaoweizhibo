@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-小薇直播纯净版 - 本地 Web 守护与交付服务 (server.py)
+跟风直播 - 本地 Web 守护与交付服务 (server.py)
 提供前端可视化控制台、小薇专属订阅直链、标准 M3U 直链及自动化调度 API。
 """
 import argparse
@@ -440,7 +440,7 @@ def run_server(port: int = PORT, config_path: str = "config.json", auto_refresh_
     server_cls = getattr(http.server, "ThreadingHTTPServer", socketserver.TCPServer)
     server_cls.allow_reuse_address = True
     with server_cls(("", port), LiveDemoHandler) as httpd:
-        print(f"[*] 小薇直播纯净版交付服务已启动:")
+        print(f"[*] 跟风直播交付服务已启动:")
         print(f"    👉 Web 监控控制台: http://localhost:{port}")
         print(f"    👉 小薇电视订阅源: http://localhost:{port}/live.txt")
         print(f"    👉 通用标准 M3U 源: http://localhost:{port}/live.m3u")
@@ -454,7 +454,7 @@ def run_server(port: int = PORT, config_path: str = "config.json", auto_refresh_
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="小薇直播纯净版 Web 演示与分发服务")
+    parser = argparse.ArgumentParser(description="跟风直播 Web 演示与分发服务")
     parser.add_argument("-p", "--port", type=int, default=PORT, help=f"监听端口 (默认: {PORT})")
     parser.add_argument("-c", "--config", default="config.json", help="配置文件路径 (默认: config.json)")
     parser.add_argument("--auto-refresh", type=float, default=None, help="后台自动轮询探测周期（小时，默认依据配置文件）")
