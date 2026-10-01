@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  xiaowei-live:
+    build: .
+    image: xiaowei-live:latest
+    container_name: xiaowei-live
+    restart: unless-stopped
+    ports:
+      - "8088:8088"
+    volumes:
+      - ./config.json:/app/config.json:ro
+      - ./output:/app/output
+    environment:
+      - TZ=Asia/Shanghai
