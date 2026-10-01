@@ -62,6 +62,13 @@ class LiveDemoHandler(http.server.SimpleHTTPRequestHandler):
 
         return super().do_GET()
 
+    def do_HEAD(self):
+        parsed = urlparse(self.path)
+        if parsed.path in ["/live.txt", "/live.m3u", "/api/status", "/api/stream_proxy"]:
+            self.do_GET()
+            return
+        return super().do_HEAD()
+
     def do_OPTIONS(self):
         self.send_response(204)
         self.send_header("Access-Control-Allow-Origin", "*")
@@ -245,49 +252,83 @@ class LiveDemoHandler(http.server.SimpleHTTPRequestHandler):
             "User-Agent": "okhttp/3.15 XiaoWeiLive/5.0.0",
             "Accept": "*/*"
         }
+        if "Range" in self.headers:
+            headers["Range"] = self.headers["Range"]
+
         try:
-            with httpx.Client(timeout=8.0, verify=False, follow_redirects=True, trust_env=False) as client:
-                resp = client.get(target_url, headers=headers)
-                if resp.status_code >= 400:
-                    self.send_error(resp.status_code, f"Upstream error {resp.status_code}")
-                    return
+            with httpx.Client(timeout=20.0, verify=False, follow_redirects=True, trust_env=False) as client:
+                is_m3u8 = ".m3u8" in target_url.lower()
 
-                content_type = resp.headers.get("Content-Type", "")
-                content_bytes = resp.content
-
-                # 若是 M3U8 播放列表，重写切片 URL 为经由本地代理的路径
-                if "mpegurl" in content_type or target_url.endswith(".m3u8") or b"#EXTM3U" in content_bytes[:100]:
-                    try:
-                        text = content_bytes.decode("utf-8", errors="replace")
-                        lines = []
-                        for line in text.splitlines():
-                            stripped = line.strip()
-                            if not stripped or stripped.startswith("#"):
-                                lines.append(line)
-                            else:
-                                abs_url = urllib.parse.urljoin(target_url, stripped)
-                                proxied = f"/api/stream_proxy?url={urllib.parse.quote(abs_url)}"
-                                lines.append(proxied)
-                        rewritten = "\n".join(lines).encode("utf-8")
-                        self.send_response(200)
-                        self.send_header("Content-Type", "application/vnd.apple.mpegurl; charset=utf-8")
-                        self.send_header("Access-Control-Allow-Origin", "*")
-                        self.send_header("Content-Length", str(len(rewritten)))
-                        self.end_headers()
-                        self.wfile.write(rewritten)
+                if is_m3u8:
+                    resp = client.get(target_url, headers=headers)
+                    if resp.status_code >= 400:
+                        self.send_error(resp.status_code, f"Upstream error {resp.status_code}")
                         return
-                    except Exception:
-                        pass
 
-                # 普通 TS 分片或媒体流
-                self.send_response(200)
-                self.send_header("Content-Type", content_type or "video/mp2t")
-                self.send_header("Access-Control-Allow-Origin", "*")
-                self.send_header("Content-Length", str(len(content_bytes)))
-                self.end_headers()
-                self.wfile.write(content_bytes)
+                    content_type = resp.headers.get("Content-Type", "")
+                    content_bytes = resp.content
+
+                    # 若是 M3U8 播放列表，重写切片 URL 为经由本地代理的路径
+                    if "mpegurl" in content_type or is_m3u8 or b"#EXTM3U" in content_bytes[:100]:
+                        try:
+                            text = content_bytes.decode("utf-8", errors="replace")
+                            base_url = str(resp.url)
+                            lines = []
+                            for line in text.splitlines():
+                                stripped = line.strip()
+                                if not stripped or stripped.startswith("#"):
+                                    lines.append(line)
+                                else:
+                                    abs_url = urllib.parse.urljoin(base_url, stripped)
+                                    proxied = f"/api/stream_proxy?url={urllib.parse.quote(abs_url)}"
+                                    lines.append(proxied)
+                            rewritten = "\n".join(lines).encode("utf-8")
+                            self.send_response(200)
+                            self.send_header("Content-Type", "application/vnd.apple.mpegurl; charset=utf-8")
+                            self.send_header("Access-Control-Allow-Origin", "*")
+                            self.send_header("Content-Length", str(len(rewritten)))
+                            self.end_headers()
+                            self.wfile.write(rewritten)
+                            return
+                        except Exception:
+                            pass
+
+                    self.send_response(resp.status_code)
+                    self.send_header("Content-Type", content_type or "application/octet-stream")
+                    self.send_header("Access-Control-Allow-Origin", "*")
+                    self.send_header("Content-Length", str(len(content_bytes)))
+                    self.end_headers()
+                    self.wfile.write(content_bytes)
+                else:
+                    # 流式传输 TS 切片/媒体流，边下载边发送，秒级传输首包
+                    with client.stream("GET", target_url, headers=headers) as resp:
+                        if resp.status_code >= 400:
+                            self.send_error(resp.status_code, f"Upstream error {resp.status_code}")
+                            return
+
+                        self.send_response(resp.status_code)
+                        content_type = resp.headers.get("Content-Type", "video/mp2t")
+                        self.send_header("Content-Type", content_type)
+                        self.send_header("Access-Control-Allow-Origin", "*")
+                        if "Content-Length" in resp.headers:
+                            self.send_header("Content-Length", resp.headers["Content-Length"])
+                        if "Content-Range" in resp.headers:
+                            self.send_header("Content-Range", resp.headers["Content-Range"])
+                        if "Accept-Ranges" in resp.headers:
+                            self.send_header("Accept-Ranges", resp.headers["Accept-Ranges"])
+                        self.end_headers()
+
+                        try:
+                            for chunk in resp.iter_bytes(chunk_size=65536):
+                                self.wfile.write(chunk)
+                            self.wfile.flush()
+                        except (BrokenPipeError, ConnectionResetError):
+                            pass
         except Exception as e:
-            self.send_error(502, f"Proxy error: {e}")
+            try:
+                self.send_error(502, f"Proxy error: {e}")
+            except Exception:
+                pass
 
     def _get_output_path(self, key: str, default_name: str) -> str:
         if self.manager and "output" in self.manager.config:
@@ -337,7 +378,9 @@ def run_server(port: int = PORT, config_path: str = "config.json", auto_refresh_
             start_scheduler(manager, refresh_hours)
 
     socketserver.TCPServer.allow_reuse_address = True
-    with socketserver.TCPServer(("", port), LiveDemoHandler) as httpd:
+    server_cls = getattr(http.server, "ThreadingHTTPServer", socketserver.TCPServer)
+    server_cls.allow_reuse_address = True
+    with server_cls(("", port), LiveDemoHandler) as httpd:
         print(f"[*] 小薇直播纯净版交付服务已启动:")
         print(f"    👉 Web 监控控制台: http://localhost:{port}")
         print(f"    👉 小薇电视订阅源: http://localhost:{port}/live.txt")

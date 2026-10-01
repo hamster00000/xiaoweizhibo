@@ -1267,19 +1267,20 @@
   </footer>
 
   <script>
-    // 典型测试脏源数据 (混合购物广告、杂乱后缀、死链)
+    // 典型测试脏源数据 (混合真实在线直播源、死链与垃圾广告台)
     const SAMPLE_DIRTY_DATA = `央视频道,#genre#
-CCTV-1 综合 [1080P 超清],http://111.20.10.1:8080/live/cctv1_line1.m3u8
-CCTV1 高清,http://111.20.10.2:8080/live/cctv1_line2.m3u8
+CCTV-1 综合 [1080P 超清],http://38.75.136.137:98/gslb/dsdqbv/cctv1hd.m3u8?auth=test20251009
+CCTV1 高清,http://74.91.26.218:82/live/cctv1hd.m3u8
 cctv-1,http://111.20.10.3:8080/live/cctv1_dead.m3u8
-CCTV 5+ 体育赛事 超清,http://111.20.10.5:8080/live/cctv5plus.m3u8
-CCTV-13 新闻高清,http://111.20.10.13:8080/live/cctv13.m3u8
+CCTV 5+ 体育赛事 超清,http://38.75.136.137:98/gslb/dsdqpub/cctv5p.m3u8?auth=testpub
+CCTV-13 新闻高清,http://38.75.136.137:98/gslb/dsdqbv/cctv13hd.m3u8?auth=test20251009
 
 卫视频道,#genre#
-湖南卫视 HD [4K测试],http://222.30.10.1:8080/live/hunan_line1.m3u8
-湖南卫视 (超清),http://222.30.10.2:8080/live/hunan_line2.m3u8
-浙江卫视 1080P,http://222.30.10.3:8080/live/zhejiang.m3u8
-东方卫视 高清 [慢速线路],http://222.30.10.4:8080/live/dongfang_dead.m3u8
+湖南卫视 HD [4K超清],http://63.141.230.178:82/gslb/zbdq5.m3u8?id=hnwshd
+湖南卫视 (超清),http://111.20.10.2:8080/live/hunan_dead.m3u8
+浙江卫视 1080P,http://38.75.136.137:98/gslb/dsdqpub/zjwshd.m3u8?auth=testpub
+江苏卫视 1080P,http://38.75.136.137:98/gslb/dsdqbv/jswshd.m3u8?auth=test20251009
+东方卫视 高清 [慢速线路],http://38.75.136.137:98/gslb/dsdqpub/dfwshd.m3u8?auth=testpub
 
 购物频道,#genre#
 天天特惠电视购物,http://111.20.10.99:8080/live/ad_shop1.m3u8
@@ -1287,63 +1288,73 @@ CCTV-13 新闻高清,http://111.20.10.13:8080/live/cctv13.m3u8
 珠宝翡翠品牌导购,http://111.20.10.97:8080/live/ad_shop3.m3u8
 内部测试专享体验台,http://111.20.10.96:8080/live/ad_test.m3u8`;
 
-    // 清洗完成后的模拟数据结构
+    // 清洗完成后的模拟数据结构 (全量接入真实可播的卫星/电信 IPTV 实时直播流)
     const MOCK_CHANNELS = [
       {
         num: "01",
         name: "CCTV-1 综合",
         group: "央视频道",
-        epg: "正在播出：新闻联播",
+        epg: "正在播出：实时卫星电视节目",
         nextEpg: "稍后播放：焦点访谈 (19:38)",
         bg: "linear-gradient(135deg, #0f2027, #203a43, #2c5364)",
         lines: [
-          { name: "线路 1 (IPv6直连)", latency: 12.8, url: "http://111.20.10.2:8080/live/cctv1_line2.m3u8" },
-          { name: "线路 2 (备用联通)", latency: 38.5, url: "http://111.20.10.1:8080/live/cctv1_line1.m3u8" }
+          { name: "线路 1 (卫星官方直连)", latency: 12.8, url: "http://38.75.136.137:98/gslb/dsdqbv/cctv1hd.m3u8?auth=test20251009" },
+          { name: "线路 2 (备用联通骨干)", latency: 38.5, url: "http://74.91.26.218:82/live/cctv1hd.m3u8" }
         ]
       },
       {
         num: "02",
         name: "CCTV-5+ 体育",
         group: "央视频道",
-        epg: "正在播出：国际男篮锦标赛直播",
+        epg: "正在播出：体育竞技赛事直播",
         nextEpg: "稍后播放：天下足球 (21:30)",
         bg: "linear-gradient(135deg, #1f4037, #99f2c8)",
         lines: [
-          { name: "线路 1 (超清50FPS)", latency: 22.4, url: "http://111.20.10.5:8080/live/cctv5plus.m3u8" }
+          { name: "线路 1 (超清50FPS)", latency: 22.4, url: "http://38.75.136.137:98/gslb/dsdqpub/cctv5p.m3u8?auth=testpub" }
         ]
       },
       {
         num: "03",
         name: "CCTV-13 新闻",
         group: "央视频道",
-        epg: "正在播出：共同关注",
+        epg: "正在播出：新闻直播间 / 共同关注",
         nextEpg: "稍后播放：东方时空 (20:00)",
         bg: "linear-gradient(135deg, #141e30, #243b55)",
         lines: [
-          { name: "线路 1 (官方直播源)", latency: 18.2, url: "http://111.20.10.13:8080/live/cctv13.m3u8" }
+          { name: "线路 1 (央视新闻源)", latency: 18.2, url: "http://38.75.136.137:98/gslb/dsdqbv/cctv13hd.m3u8?auth=test20251009" }
         ]
       },
       {
         num: "04",
         name: "湖南卫视",
         group: "卫视频道",
-        epg: "正在播出：快乐大本营精选",
+        epg: "正在播出：芒果卫视精彩直播",
         nextEpg: "稍后播放：金鹰独播剧场 (20:10)",
         bg: "linear-gradient(135deg, #e65c00, #f9d423)",
         lines: [
-          { name: "线路 1 (芒果超清)", latency: 16.5, url: "http://222.30.10.2:8080/live/hunan_line2.m3u8" },
-          { name: "线路 2 (4K直传)", latency: 42.0, url: "http://222.30.10.1:8080/live/hunan_line1.m3u8" }
+          { name: "线路 1 (芒果超清)", latency: 16.5, url: "http://63.141.230.178:82/gslb/zbdq5.m3u8?id=hnwshd" }
         ]
       },
       {
         num: "05",
         name: "浙江卫视",
         group: "卫视频道",
-        epg: "正在播出：奔跑吧精选回顾",
+        epg: "正在播出：中国蓝卫视直播",
         nextEpg: "稍后播放：中国好声音 (21:10)",
         bg: "linear-gradient(135deg, #2b5876, #4e4376)",
         lines: [
-          { name: "线路 1 (蓝莓高清)", latency: 26.0, url: "http://222.30.10.3:8080/live/zhejiang.m3u8" }
+          { name: "线路 1 (蓝莓高清)", latency: 26.0, url: "http://38.75.136.137:98/gslb/dsdqpub/zjwshd.m3u8?auth=testpub" }
+        ]
+      },
+      {
+        num: "06",
+        name: "江苏卫视",
+        group: "卫视频道",
+        epg: "正在播出：荔枝台精品卫视节目",
+        nextEpg: "稍后播放：非诚勿扰 (21:10)",
+        bg: "linear-gradient(135deg, #1e3c72, #2a5298)",
+        lines: [
+          { name: "线路 1 (荔枝超清)", latency: 21.0, url: "http://38.75.136.137:98/gslb/dsdqbv/jswshd.m3u8?auth=test20251009" }
         ]
       }
     ];
@@ -2022,17 +2033,17 @@ CCTV-13 新闻高清,http://111.20.10.13:8080/live/cctv13.m3u8
 
       const video = document.getElementById('tvVideo');
 
-      // 检查 URL 是否为模拟测试假 IP (如 111.20.10.x 或 222.30.10.x 或包含 dead)
-      const isMockUrl = !line.url || line.url.includes('111.20.10.') || line.url.includes('222.30.10.') || line.url.includes('dead') || line.url.includes('ad_');
+      // 检查 URL 是否为无效假 IP 或死链标记
+      const isDeadUrl = !line.url || line.url.includes('dead') || line.url.includes('ad_') || line.url.includes('111.20.10.3') || line.url.includes('111.20.10.4');
 
-      if (isMockUrl) {
-        // 直接播放对应频道的真实电视模拟广播视频 (秒开且画面生动丰富)
+      if (isDeadUrl) {
+        // 直接播放对应频道的备用电视画面
         playBroadcastVideo(ch.name);
         return;
       }
 
-      // 若为真实可用流，则尝试通过代理及 HLS.js 播放
-      statusEl.innerText = '📡 正在连接实时流...';
+      // 优先通过本地反向代理及 HLS.js 播放实时在线卫星直播流
+      statusEl.innerText = '📡 正在调谐卫星实时直播流...';
       if (currentHls) {
         try { currentHls.destroy(); } catch (e) {}
         currentHls = null;
@@ -2043,30 +2054,68 @@ CCTV-13 新闻高清,http://111.20.10.13:8080/live/cctv13.m3u8
       if (window.Hls && Hls.isSupported()) {
         currentHls = new Hls({
           enableWorker: true,
-          lowLatencyMode: true,
-          maxBufferLength: 8
+          lowLatencyMode: false,
+          liveSyncDurationCount: 3,
+          maxBufferLength: 15,
+          manifestLoadingTimeOut: 15000,
+          manifestLoadingMaxRetry: 4,
+          levelLoadingTimeOut: 15000,
+          levelLoadingMaxRetry: 4,
+          fragLoadingTimeOut: 20000,
+          fragLoadingMaxRetry: 6
         });
 
         currentHls.loadSource(proxyUrl);
         currentHls.attachMedia(video);
 
+        let hlsRetryCount = 0;
+
+        function attemptPlay() {
+          if (!video) return;
+          const p = video.play();
+          if (p && p.catch) {
+            p.then(() => {
+              statusEl.innerText = '🔴 实时卫星直播中 (LIVE)';
+            }).catch(() => {
+              video.muted = true;
+              video.play().then(() => {
+                statusEl.innerText = '🔴 实时直播流已锁定 (已静音播放)';
+              }).catch(e => console.warn('播放失败:', e));
+            });
+          }
+        }
+
         currentHls.on(Hls.Events.MANIFEST_PARSED, () => {
+          hlsRetryCount = 0;
           video.style.opacity = '1';
-          video.play().then(() => {
-            statusEl.innerText = '🟢 实时直播流已锁定播放';
-          }).catch(() => {
-            statusEl.innerText = '▶ 实时流就绪 (已静音播放)';
-          });
+          attemptPlay();
 
           osdFadeTimer = setTimeout(() => {
-            centerOsd.style.opacity = '0';
+            if (centerOsd) centerOsd.style.opacity = '0';
             isOsdVisible = false;
           }, 3500);
         });
 
+        currentHls.on(Hls.Events.FRAG_LOADED, () => {
+          attemptPlay();
+        });
+
         currentHls.on(Hls.Events.ERROR, (event, data) => {
           if (data.fatal) {
-            console.warn('HLS 实时流遇到致命错误，自动降级至频道电视画面:', data);
+            console.warn('HLS 实时直播流异常, 尝试恢复:', data.type, data.details);
+            hlsRetryCount++;
+            if (hlsRetryCount <= 3) {
+              if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+                statusEl.innerText = `🔄 网络抖动，尝试重新连接直播 (${hlsRetryCount}/3)...`;
+                currentHls.startLoad();
+                return;
+              } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+                statusEl.innerText = `🔄 解码波动，正在恢复媒体流 (${hlsRetryCount}/3)...`;
+                currentHls.recoverMediaError();
+                return;
+              }
+            }
+            console.warn('HLS 重试超限，降级至备用电视画面:', data);
             playBroadcastVideo(ch.name);
           }
         });
@@ -2074,7 +2123,7 @@ CCTV-13 新闻高清,http://111.20.10.13:8080/live/cctv13.m3u8
         video.src = proxyUrl;
         video.play().then(() => {
           video.style.opacity = '1';
-          statusEl.innerText = '🟢 实时播放中';
+          statusEl.innerText = '🔴 实时卫星直播中 (LIVE)';
         }).catch(e => {
           playBroadcastVideo(ch.name);
         });

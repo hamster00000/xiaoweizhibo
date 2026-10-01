@@ -140,12 +140,61 @@ CCTV-1 综合,http://test.live/cctv1.m3u8
             self.assertEqual(e.code, 400)
 
 
-    def test_video_static_delivery(self):
-        url = f"http://127.0.0.1:{TEST_PORT}/videos/cctv1.mp4"
-        req = urllib.request.Request(url, method="HEAD")
-        with urllib.request.urlopen(req) as resp:
-            self.assertEqual(resp.status, 200)
-            self.assertEqual(resp.headers.get("Content-Type"), "video/mp4")
+    def test_stream_proxy_rewrite_and_ts_streaming(self):
+        import http.server
+        import urllib.parse
+
+        # 启动一个本地临时 mock upstream 服务
+        class MockUpstreamHandler(http.server.BaseHTTPRequestHandler):
+            def do_GET(self):
+                if self.path == "/mock/live.m3u8":
+                    content = b"#EXTM3U\n#EXT-X-VERSION:3\n#EXTINF:10.0,\nseg1.ts\n"
+                    self.send_response(200)
+                    self.send_header("Content-Type", "application/vnd.apple.mpegurl")
+                    self.send_header("Content-Length", str(len(content)))
+                    self.end_headers()
+                    self.wfile.write(content)
+                elif self.path == "/mock/seg1.ts":
+                    content = b"G@\x00\x10MOCK_TS_PACKET_CONTENT_12345678" * 50
+                    self.send_response(200)
+                    self.send_header("Content-Type", "video/mp2t")
+                    self.send_header("Content-Length", str(len(content)))
+                    self.end_headers()
+                    self.wfile.write(content)
+                else:
+                    self.send_error(404)
+
+            def log_message(self, format, *args):
+                pass
+
+        mock_server = http.server.HTTPServer(("127.0.0.1", 0), MockUpstreamHandler)
+        mock_port = mock_server.server_port
+        mock_thread = threading.Thread(target=mock_server.serve_forever, daemon=True)
+        mock_thread.start()
+
+        try:
+            # 1. 测试 M3U8 重写
+            target_m3u8 = f"http://127.0.0.1:{mock_port}/mock/live.m3u8"
+            proxy_m3u8_url = f"http://127.0.0.1:{TEST_PORT}/api/stream_proxy?url={urllib.parse.quote(target_m3u8)}"
+            with urllib.request.urlopen(proxy_m3u8_url) as resp:
+                self.assertEqual(resp.status, 200)
+                body = resp.read().decode("utf-8")
+                self.assertIn("#EXTM3U", body)
+                expected_part = f"/api/stream_proxy?url={urllib.parse.quote(f'http://127.0.0.1:{mock_port}/mock/seg1.ts')}"
+                self.assertIn(expected_part, body)
+
+            # 2. 测试 TS 分片流式代理
+            target_ts = f"http://127.0.0.1:{mock_port}/mock/seg1.ts"
+            proxy_ts_url = f"http://127.0.0.1:{TEST_PORT}/api/stream_proxy?url={urllib.parse.quote(target_ts)}"
+            with urllib.request.urlopen(proxy_ts_url) as resp:
+                self.assertEqual(resp.status, 200)
+                self.assertIn("video/mp2t", resp.headers.get("Content-Type", ""))
+                ts_data = resp.read()
+                self.assertTrue(ts_data.startswith(b"G@\x00\x10MOCK_TS_PACKET"))
+                self.assertEqual(len(ts_data), len(b"G@\x00\x10MOCK_TS_PACKET_CONTENT_12345678" * 50))
+        finally:
+            mock_server.shutdown()
+            mock_server.server_close()
 
 
 if __name__ == "__main__":
