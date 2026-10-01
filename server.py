@@ -56,6 +56,16 @@ class LiveDemoHandler(http.server.SimpleHTTPRequestHandler):
             self._handle_channels()
             return
 
+        # 3.2 小米电视应用信息与配置
+        if parsed.path == "/api/tv/info":
+            self._handle_tv_info()
+            return
+
+        # 3.3 小米电视/Android TV 安装包一键下载
+        if parsed.path in ["/download/tv-app.apk", "/download/xiaowei.apk", "/download/mytv.apk"]:
+            self._handle_tv_download(parsed.path)
+            return
+
         # 4. HLS 媒体流跨域代理接口 (供网页端播放器跨域播放直播流)
         if parsed.path == "/api/stream_proxy":
             self._handle_stream_proxy(parsed)
@@ -69,7 +79,8 @@ class LiveDemoHandler(http.server.SimpleHTTPRequestHandler):
 
     def do_HEAD(self):
         parsed = urlparse(self.path)
-        if parsed.path in ["/live.txt", "/live.m3u", "/api/status", "/api/channels", "/api/stream_proxy"]:
+        tv_download_routes = ["/download/tv-app.apk", "/download/xiaowei.apk", "/download/mytv.apk"]
+        if parsed.path in ["/live.txt", "/live.m3u", "/api/status", "/api/channels", "/api/tv/info", "/api/stream_proxy"] + tv_download_routes:
             self.do_GET()
             return
         return super().do_HEAD()
@@ -396,6 +407,96 @@ class LiveDemoHandler(http.server.SimpleHTTPRequestHandler):
             filename = out_cfg.get(key, default_name)
             return os.path.join(out_dir, filename)
         return os.path.join(BASE_DIR, "output", default_name)
+
+    def _handle_tv_info(self):
+        """返回小米电视专属安装指南、下载链接与订阅信息"""
+        try:
+            from scripts.package_tv_app import get_tv_app_status
+            status_data = get_tv_app_status()
+        except Exception:
+            status_data = {}
+
+        host = self.headers.get("Host", "localhost:8088")
+        info = {
+            "status": "success",
+            "tv_app_status": status_data,
+            "subscription_urls": {
+                "xiaowei": f"http://{host}/live.txt",
+                "m3u": f"http://{host}/live.m3u",
+            },
+            "download_urls": {
+                "recommended": f"http://{host}/download/tv-app.apk",
+                "xiaowei": f"http://{host}/download/xiaowei.apk",
+                "mytv": f"http://{host}/download/mytv.apk",
+            },
+            "install_guide": {
+                "usb": [
+                    "在小米电视【设置】->【账号与安全】中将【安装未知来源的应用】设为【允许】",
+                    "在电脑端下载推荐 APK (tv-app.apk) 拷贝至 U 盘根目录",
+                    "将 U 盘插入小米电视 USB 口，在弹出的窗口或【高清播放器】中打开 APK 点击安装",
+                    "打开小薇直播后进入【设置】->【自定义频道】/【网络自定义】，填入订阅链接"
+                ],
+                "adb": f"./scripts/install_to_mi_tv.sh <电视IP>"
+            }
+        }
+        resp_data = json.dumps(info, ensure_ascii=False, indent=2).encode("utf-8")
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(resp_data)))
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.end_headers()
+        self.wfile.write(resp_data)
+
+    def _handle_tv_download(self, req_path: str):
+        """流式提供小米电视可安装 APK 文件的下载"""
+        tv_dir = os.path.join(BASE_DIR, "output", "tv_app")
+        if "xiaowei" in req_path:
+            filename = "QingFeng_XiaoWei_TV.apk"
+            target_key = "xiaowei"
+        elif "mytv" in req_path:
+            filename = "QingFeng_MyTV_TV.apk"
+            target_key = "mytv"
+        else:
+            filename = "tv-app.apk"
+            target_key = "xiaowei"
+
+        apk_path = os.path.join(tv_dir, filename)
+        if not os.path.exists(apk_path) or os.path.getsize(apk_path) < 1024 * 1024:
+            # 若文件未就绪，尝试就地触发准备
+            try:
+                from scripts.package_tv_app import prepare_tv_apps
+                prepare_tv_apps(target_key)
+            except Exception as e:
+                print(f"[!] 自动拉取/打包 TV 应用失败: {e}", file=sys.stderr)
+
+        if not os.path.exists(apk_path) or os.path.getsize(apk_path) < 1024 * 1024:
+            self.send_response(404)
+            self.send_header("Content-Type", "text/plain; charset=utf-8")
+            self.end_headers()
+            self.wfile.write("未找到电视应用安装包，请稍后重试或在服务器端运行 python3 scripts/package_tv_app.py。".encode("utf-8"))
+            return
+
+        file_size = os.path.getsize(apk_path)
+        display_name = "QingFeng_XiaoWei_TV.apk" if filename in ["tv-app.apk", "QingFeng_XiaoWei_TV.apk"] else filename
+
+        self.send_response(200)
+        self.send_header("Content-Type", "application/vnd.android.package-archive")
+        self.send_header("Content-Disposition", f'attachment; filename="{display_name}"')
+        self.send_header("Content-Length", str(file_size))
+        self.send_header("Accept-Ranges", "bytes")
+        self.send_header("Cache-Control", "public, max-age=3600")
+        self.end_headers()
+
+        try:
+            with open(apk_path, "rb") as f:
+                while True:
+                    chunk = f.read(64 * 1024)
+                    if not chunk:
+                        break
+                    self.wfile.write(chunk)
+                self.wfile.flush()
+        except (BrokenPipeError, ConnectionResetError):
+            pass
 
 
 def start_scheduler(manager: LiveSourceManager, interval_hours: float):

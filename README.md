@@ -94,6 +94,36 @@ python3 demo.py
 
 ## 📺 电视端与播放器接入方式
 
+### 方式零：小米电视专属 APK 打包与安装（开箱即用 🌟）
+
+本项目已针对**小米电视（PatchWall / Android TV / MIUI TV）**及各大安卓机顶盒深度定制了开箱即用的安装包准备工具与局域网无线安装助手：
+
+#### 1. 一键准备/拉取小米电视专用 APK
+```bash
+# 准备针对小米电视深度优化的去广告纯净版直播 APK (18MB)
+python3 scripts/package_tv_app.py xiaowei
+
+# 或准备现代原生 Android TV 播放器 (MyTV 电视版)
+python3 scripts/package_tv_app.py mytv
+```
+应用安装包将自动输出至 `output/tv_app/QingFeng_XiaoWei_TV.apk`（默认符号链接 `output/tv_app/tv-app.apk`）。
+
+#### 2. 小米电视 3 种极速安装方式
+* **方法 A（U 盘直接安装，最推荐）**：
+  1. 开启小米电视权限：进入电视【设置】 ➔ 【账号与安全】 ➔ 将【安装未知来源的应用】更改为【允许】；
+  2. 将生成的 `output/tv_app/tv-app.apk` 拷贝至 U 盘根目录；
+  3. 将 U 盘插入小米电视 USB 接口，在电视弹出的“发现新设备”或【高清播放器】中打开 APK 点击安装即可！
+* **方法 B（局域网 ADB 无线一键直推，免拔插 U 盘）**：
+  在电视【关于】连按 5 次版本号开启开发者选项并开启【ADB 调试】，电脑端直接运行：
+  ```bash
+  ./scripts/install_to_mi_tv.sh <您的小米电视局域网IP>
+  ```
+* **方法 C（网页/电视浏览器直接下载）**：
+  电脑或小米电视内置浏览器直接访问本服务：
+  `http://<服务器IP>:8088/download/tv-app.apk`
+
+---
+
 ### 方式一：小薇直播【网络自定义】固定在线订阅（推荐 🌟）
 1. 启动 `server.py`（部署在软路由、NAS、Docker 或局域网电脑）。
 2. 在智能电视打开【小薇直播】。

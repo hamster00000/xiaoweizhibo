@@ -7,3 +7,4 @@ __pycache__/
 output/*.tmp
 .server.pid
 output/server.log
+*.apk

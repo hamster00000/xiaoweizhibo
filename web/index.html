@@ -1014,6 +1014,62 @@
       color: #ffffff;
       border-color: #38bdf8;
     }
+
+    /* 小米电视应用安装模态框样式 */
+    .tv-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.82);
+      backdrop-filter: blur(8px);
+      z-index: 9999;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .tv-modal-card {
+      background: #111827;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 16px;
+      width: 100%;
+      max-width: 760px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      animation: modalFadeIn 0.25s ease-out;
+    }
+    @keyframes modalFadeIn {
+      from { opacity: 0; transform: scale(0.96); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .tv-modal-header {
+      padding: 18px 24px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #182234;
+    }
+    .tv-modal-body {
+      padding: 24px;
+      max-height: 75vh;
+      overflow-y: auto;
+    }
+    .tv-install-step-card {
+      background: #1f293d;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      padding: 14px 18px;
+      margin-bottom: 14px;
+    }
+    .tv-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
   </style>
 </head>
 <body>
@@ -1030,6 +1086,7 @@
       <span id="serverStatusPill" style="font-size:0.78rem; color:#94a3b8; display:flex; align-items:center; gap:6px; background:rgba(0,0,0,0.3); padding:5px 12px; border-radius:16px; border:1px solid var(--border);">
         <span id="statusDot" style="color:#10b981;">●</span> <span id="statusText">系统就绪</span>
       </span>
+      <button class="btn btn-warning" id="btnXiaomiTV" onclick="openXiaomiTVModal()" style="background: linear-gradient(135deg, #f59e0b, #d97706); color:#ffffff; font-weight:700; box-shadow:0 4px 12px rgba(245, 158, 11, 0.35);">📺 小米电视安装与APK</button>
       <button class="btn btn-secondary" onclick="loadSampleSource()">📥 载入典型脏源样例</button>
       <button class="btn btn-primary" id="btnRunWorkflow" onclick="startWorkflowSim()">⚡ 启动全流程模拟</button>
       <button class="btn btn-success" id="btnRefreshServer" onclick="triggerServerRefresh()">🔄 后台测速更新</button>
@@ -1301,6 +1358,25 @@
                   ⬇ 下载 live.m3u
                 </button>
               </div>
+            </div>
+          </div>
+
+          <!-- 小米电视专属 APK 安装包 -->
+          <div class="delivery-box" style="border: 1px solid rgba(245, 158, 11, 0.35); background: rgba(245, 158, 11, 0.05);">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <strong style="font-size:0.9rem; color:#fbbf24;">📺 方式三：小米电视专属应用包 (APK)</strong>
+              <span class="tv-badge" style="background:#f59e0b; color:#0f172a;">推荐电视端</span>
+            </div>
+            <p style="font-size:0.78rem; color:var(--text-muted);">
+              直装小米电视/机顶盒，针对遥控器上下切台与全屏防锁屏深度优化：
+            </p>
+            <div style="display:flex; flex-direction:column; gap:8px; margin-top:auto;">
+              <a href="/download/tv-app.apk" class="btn btn-warning" style="background:linear-gradient(135deg, #f59e0b, #d97706); color:#ffffff; font-weight:700; justify-content:center; text-decoration:none;">
+                ⬇ 下载小薇直播纯净版 TV.apk (18MB)
+              </a>
+              <button class="btn btn-secondary" style="justify-content:center;" onclick="openXiaomiTVModal()">
+                📖 查看小米电视 3 分钟安装指引 (U盘/ADB)
+              </button>
             </div>
           </div>
         </div>
@@ -2901,6 +2977,46 @@ CHC动作电影,http://38.75.136.137:98/gslb/dsdqbv/chcdz.m3u8?auth=test20251009
       }
     });
 
+    // 小米电视安装模态框相关
+    function openXiaomiTVModal() {
+      const modal = document.getElementById('xiaomiTvModal');
+      if (modal) {
+        modal.style.display = 'flex';
+        const origin = window.location.origin || 'http://localhost:8088';
+        const modalSub = document.getElementById('modalSubUrlField');
+        if (modalSub) modalSub.value = origin + '/live.txt';
+      }
+    }
+
+    function closeXiaomiTVModal() {
+      const modal = document.getElementById('xiaomiTvModal');
+      if (modal) modal.style.display = 'none';
+    }
+
+    function handleTvModalOverlayClick(e) {
+      if (e.target && e.target.id === 'xiaomiTvModal') {
+        closeXiaomiTVModal();
+      }
+    }
+
+    function copyModalSubUrl() {
+      const input = document.getElementById('modalSubUrlField');
+      if (input) {
+        input.select();
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(input.value).then(() => {
+            alert('已成功复制电视订阅直链！在小米电视【小薇直播】->【设置】->【网络自定义】填入即可。');
+          }).catch(() => {
+            document.execCommand('copy');
+            alert('已复制电视订阅直链！');
+          });
+        } else {
+          document.execCommand('copy');
+          alert('已复制电视订阅直链！');
+        }
+      }
+    }
+
     // 初始化
     window.onload = () => {
       // 动态更新订阅 URL 字段
@@ -2928,5 +3044,96 @@ CHC动作电影,http://38.75.136.137:98/gslb/dsdqbv/chcdz.m3u8?auth=test20251009
       setInterval(fetchSystemStatus, 15000);
     };
   </script>
+
+  <!-- 小米电视应用安装与 APK 模态框 -->
+  <div class="tv-modal-overlay" id="xiaomiTvModal" onclick="handleTvModalOverlayClick(event)">
+    <div class="tv-modal-card">
+      <div class="tv-modal-header">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span style="font-size:1.4rem;">📺</span>
+          <div>
+            <h3 style="font-size:1.1rem; color:#fff;">小米电视应用安装与 APK 下载</h3>
+            <p style="font-size:0.75rem; color:#94a3b8;">为小米智能电视 / MIUI TV / 机顶盒深度定制的电视直播体验</p>
+          </div>
+        </div>
+        <button onclick="closeXiaomiTVModal()" style="background:transparent; border:none; color:#94a3b8; font-size:1.4rem; cursor:pointer; padding:4px 8px;">✕</button>
+      </div>
+      <div class="tv-modal-body">
+        <!-- 下载区 -->
+        <div style="background:#1e293b; border-radius:12px; padding:16px; margin-bottom:20px; border:1px solid rgba(245, 158, 11, 0.25);">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <div>
+              <strong style="color:#fbbf24; font-size:0.95rem;">📦 小米电视适配 APK 安装包</strong>
+              <div style="font-size:0.75rem; color:#94a3b8; margin-top:2px;">免广告纯净版，原生支持遥控器数字选台与上下换台</div>
+            </div>
+            <span class="tv-badge" style="background:#10b981; color:#fff;">兼容 Android 5.0~14</span>
+          </div>
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <a href="/download/tv-app.apk" class="btn btn-warning" style="flex:1; min-width:220px; justify-content:center; text-decoration:none; font-weight:700; background:linear-gradient(135deg, #f59e0b, #d97706); color:#fff;">
+              ⬇ 下载小薇直播纯净版 TV.apk (18MB)
+            </a>
+            <a href="/download/mytv.apk" class="btn btn-secondary" style="flex:1; min-width:220px; justify-content:center; text-decoration:none;">
+              ⬇ 下载 MyTV 现代版 (30MB)
+            </a>
+          </div>
+        </div>
+
+        <!-- 电视端订阅地址一键复制 -->
+        <div style="background:#0f172a; border-radius:12px; padding:14px; margin-bottom:20px; border:1px solid rgba(255, 255, 255, 0.08);">
+          <label style="font-size:0.78rem; color:#94a3b8; margin-bottom:6px; display:block;">
+            📡 小米电视【网络自定义源】订阅链接 (填入电视软件即可永久自愈):
+          </label>
+          <div style="display:flex; gap:8px;">
+            <input type="text" id="modalSubUrlField" class="sub-url-input" value="http://localhost:8088/live.txt" readonly style="flex:1; font-family:monospace; color:#38bdf8;">
+            <button class="btn btn-primary" onclick="copyModalSubUrl()">📋 复制直链</button>
+          </div>
+        </div>
+
+        <!-- 3种安装方法 -->
+        <div style="margin-bottom:12px;">
+          <h4 style="font-size:0.9rem; color:#e2e8f0; margin-bottom:10px; display:flex; align-items:center; gap:6px;">
+            🛠️ 3 种将 APK 安装到小米电视的方法：
+          </h4>
+
+          <!-- 方式 1 -->
+          <div class="tv-install-step-card">
+            <div style="font-size:0.85rem; font-weight:700; color:#38bdf8; margin-bottom:6px;">
+              💾 方法 1：U 盘直接安装（最推荐、最稳妥）
+            </div>
+            <ol style="font-size:0.78rem; color:#cbd5e1; padding-left:18px; line-height:1.6;">
+              <li>电视开机，进入【设置】 ➔ 【账号与安全】 ➔ 将【安装未知来源的应用】更改为【允许】；</li>
+              <li>点击上方按钮下载 <code>tv-app.apk</code>，拷贝到 U 盘根目录；</li>
+              <li>把 U 盘插入小米电视 USB 口，电视会弹出“发现新设备”提示，直接点击打开；或打开电视主界面的【高清播放器】 / 【应用商店 ➔ 用户应用】；</li>
+              <li>点击 APK 即可一键完成安装！</li>
+            </ol>
+          </div>
+
+          <!-- 方式 2 -->
+          <div class="tv-install-step-card">
+            <div style="font-size:0.85rem; font-weight:700; color:#10b981; margin-bottom:6px;">
+              ⚡ 方法 2：局域网无线 ADB 一键推送（极客推荐，免插 U 盘）
+            </div>
+            <p style="font-size:0.78rem; color:#cbd5e1; margin-bottom:6px;">
+              在电视【关于】连续点击 5 次版本号开启开发者模式并打开【ADB 调试】，然后在电脑终端直接运行：
+            </p>
+            <pre style="background:#090d16; padding:8px 12px; border-radius:6px; font-size:0.76rem; color:#a7f3d0; font-family:monospace; user-select:all;">./scripts/install_to_mi_tv.sh &lt;您的小米电视IP&gt;</pre>
+          </div>
+
+          <!-- 方式 3 -->
+          <div class="tv-install-step-card">
+            <div style="font-size:0.85rem; font-weight:700; color:#f59e0b; margin-bottom:6px;">
+              🌐 方法 3：小米电视自带浏览器直接下载安装
+            </div>
+            <p style="font-size:0.78rem; color:#cbd5e1; line-height:1.6;">
+              在小米电视应用中打开浏览器，直接在地址栏输入本机的下载直链（例如 <code>http://局域网IP:8088/download/tv-app.apk</code>），下载完成后在电视通知栏点击即可直接安装。
+            </p>
+          </div>
+        </div>
+      </div>
+      <div style="padding:14px 24px; border-top:1px solid rgba(255,255,255,0.08); background:#182234; display:flex; justify-content:flex-end;">
+        <button class="btn btn-secondary" onclick="closeXiaomiTVModal()">关闭窗口</button>
+      </div>
+    </div>
+  </div>
 </body>
 </html>
