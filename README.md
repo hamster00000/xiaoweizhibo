@@ -28,32 +28,51 @@
 
 ## 🚀 快速开始
 
-### 1. 安装依赖
+### 1. 一键运行（推荐 🌟）
 
-本项目核心基于 Python 异步标准库，仅依赖轻量级 `httpx`：
+项目根目录下提供了全功能一键运行与服务管理脚本 `start.sh`（或 `run.sh`）：
 
 ```bash
-git clone https://github.com/your-username/xiaoweizhibo.git
-cd xiaoweizhibo
-pip install -r requirements.txt
+# 一键前台启动（自动检查依赖、自动生成初始纯净源与广播视频、自动弹出浏览器）
+./start.sh
+
+# 或以守护进程方式在后台长时间静默运行
+./start.sh -d
 ```
 
-### 2. 启动服务与 Web 控制台
+管理常用命令：
+```bash
+./start.sh status   # 查看服务运行状态与 API 探针
+./start.sh restart  # 一键重启服务
+./start.sh stop     # 停止后台服务
+./start.sh test     # 执行全套自动化单元与集成测试
+./start.sh help     # 查看完整帮助信息
+```
+
+启动成功后，终端将输出带有局域网 IP 与电视端直链的控制台面板：
+```text
+======================================================================
+        📺 小薇直播纯净版 (XiaoWei Live Clean Edition) 
+======================================================================
+  🖥️  本机控制台:      http://localhost:8088
+  🌐 局域网控制台:    http://192.168.0.113:8088
+
+  📡 小薇直播专用直链 (电视端【网络自定义源】直接填入):
+     👉 http://192.168.0.113:8088/live.txt
+
+  📱 标准通用 M3U 订阅 (TiviMate / Kodi / VLC / 手机播放器):
+     👉 http://192.168.0.113:8088/live.m3u
+======================================================================
+```
+
+### 2. 手动启动方式
+
+若需手动启动 Python 服务：
 
 ```bash
+pip install -r requirements.txt
 python3 server.py --port 8088
 ```
-
-启动后控制台输出：
-```text
-[*] 小薇直播纯净版交付服务已启动:
-    👉 Web 监控控制台: http://localhost:8088
-    👉 小薇电视订阅源: http://localhost:8088/live.txt
-    👉 通用标准 M3U 源: http://localhost:8088/live.m3u
-    👉 健康状态接口: http://localhost:8088/api/status
-```
-
-打开浏览器访问 `http://localhost:8088` 即可进入 Web 原型与大屏控制台，支持模拟测速、电视画面试播与遥控器交互体验。
 
 ### 3. 单次全量命令行抓取与测速
 
