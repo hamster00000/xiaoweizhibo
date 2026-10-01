@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-小薇直播源自动化抓取、测速与导出运行入口
+清风直播源自动化抓取、测速与导出运行入口
 """
 import argparse
 import sys
@@ -8,7 +8,7 @@ from live_crawler.manager import LiveSourceManager
 
 
 def main():
-    parser = argparse.ArgumentParser(description="跟风直播 - 直播源自动化抓取与测速维护工具")
+    parser = argparse.ArgumentParser(description="清风直播 - 直播源自动化抓取与测速维护工具")
     parser.add_argument("-c", "--config", default="config.json", help="配置文件路径 (默认: config.json)")
     parser.add_argument("--dry-run", action="store_true", help="跳过流媒体网络连通性测速，直接导出")
     parser.add_argument("--timeout", type=float, default=None, help="覆盖测速超时时间（秒）")

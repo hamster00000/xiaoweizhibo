@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-跟风直播 - 直播源处理核心流程演示 (Demo)
-展示从原始杂乱直播源 -> 智能过滤广告 -> 频道标准化 -> 测速优选 -> 导出小薇直播标准格式的全过程。
+清风直播 - 直播源处理核心流程演示 (Demo)
+展示从原始杂乱直播源 -> 智能过滤广告 -> 频道标准化 -> 测速优选 -> 导出清风直播标准格式的全过程。
 """
 import os
 import sys
@@ -35,7 +35,7 @@ http://111.20.10.8:8080/live/shop2.m3u8
 
 def run_demo():
     print("=" * 65)
-    print("      跟风直播 - 直播源清洗与转换管线 Demo 演示")
+    print("      清风直播 - 直播源清洗与转换管线 Demo 演示")
     print("=" * 65)
 
     # 步骤一：解析原始源并智能过滤广告
@@ -77,8 +77,8 @@ def run_demo():
             best_info = ", ".join([f"{l.url} ({l.latency_ms}ms)" for l in lines])
             print(f"     * {ch_name}: 已优选保留 {len(lines)} 条最快线路: {best_info}")
 
-    # 步骤四：导出为跟风直播专用 TXT 格式
-    print("\n【步骤 4】导出为小薇直播专用 TXT 文件 (分类 #genre# 格式)...")
+    # 步骤四：导出为清风直播专用 TXT 格式
+    print("\n【步骤 4】导出为清风直播专用 TXT 文件 (分类 #genre# 格式)...")
     xiaowei_txt = exporter.export_xiaowei_txt(grouped)
     
     # 保存到 output/demo_xiaowei.txt
@@ -89,12 +89,12 @@ def run_demo():
         f.write(xiaowei_txt)
 
     print("-" * 50)
-    print("【小薇直播 live_xiaowei.txt 文件内容预览】:")
+    print("【清风直播 live_xiaowei.txt 文件内容预览】:")
     print("-" * 50)
     print(xiaowei_txt.strip())
     print("-" * 50)
     print(f"演示输出文件已保存至: {os.path.abspath(demo_txt_file)}")
-    print("可以直接复制该文件内容导入小薇直播或通过局域网上传使用！")
+    print("可以直接复制该文件内容导入清风/小薇直播或通过局域网上传使用！")
     print("=" * 65)
 
 

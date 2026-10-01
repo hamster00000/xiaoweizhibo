@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# 跟风直播 (XiaoWei Live Clean Edition) - 一键运行与管理脚本
+# 清风直播 (QingFeng Live Clean Edition) - 一键运行与管理脚本
 # ==============================================================================
 
 set -e
@@ -58,12 +58,12 @@ print_banner() {
     local lan_ip
     lan_ip=$(get_lan_ip)
     echo -e "${CYAN}======================================================================${NC}"
-    echo -e "${BOLD}${GREEN}        📺 跟风直播 (XiaoWei Live Clean Edition) ${NC}"
+    echo -e "${BOLD}${GREEN}        📺 清风直播 (QingFeng Live Clean Edition) ${NC}"
     echo -e "${CYAN}======================================================================${NC}"
     echo -e "  ${BOLD}🖥️  本机控制台:${NC}      ${BLUE}http://localhost:${PORT}${NC}"
     echo -e "  ${BOLD}🌐 局域网控制台:${NC}    ${BLUE}http://${lan_ip}:${PORT}${NC}"
     echo ""
-    echo -e "  ${BOLD}📡 小薇直播专用直链 (电视端【网络自定义源】直接填入):${NC}"
+    echo -e "  ${BOLD}📡 清风直播专用直链 (电视端【网络自定义源】直接填入):${NC}"
     echo -e "     👉 ${YELLOW}http://${lan_ip}:${PORT}/live.txt${NC}"
     echo ""
     echo -e "  ${BOLD}📱 标准通用 M3U 订阅 (TiviMate / Kodi / VLC / 手机播放器):${NC}"
@@ -196,7 +196,7 @@ stop_server() {
         fi
         echo -e "${GREEN}[✓] 服务已停止。${NC}"
     else
-        echo -e "${YELLOW}[i] 未检测到端口 ${PORT} 正在运行的小薇直播服务。${NC}"
+        echo -e "${YELLOW}[i] 未检测到端口 ${PORT} 正在运行的清风直播服务。${NC}"
     fi
 
     rm -f "$PID_FILE"
@@ -207,7 +207,7 @@ status_server() {
     local pid
     pid=$(get_pid_on_port "$PORT")
     if [ -n "$pid" ]; then
-        echo -e "${GREEN}[● 在线] 小薇直播服务正常运行中 (PID: ${pid}, 端口: ${PORT})${NC}"
+        echo -e "${GREEN}[● 在线] 清风直播服务正常运行中 (PID: ${pid}, 端口: ${PORT})${NC}"
         if command -v curl >/dev/null 2>&1; then
             echo -e "${CYAN}--- API 状态响应 ---${NC}"
             curl -s "http://127.0.0.1:${PORT}/api/status" || true
@@ -215,7 +215,7 @@ status_server() {
         fi
         print_banner
     else
-        echo -e "${RED}[○ 离线] 小薇直播服务当前未运行。${NC}"
+        echo -e "${RED}[○ 离线] 清风直播服务当前未运行。${NC}"
         echo -e "可执行 ${BOLD}./start.sh${NC} 或 ${BOLD}./start.sh -d${NC} 启动服务。"
     fi
 }

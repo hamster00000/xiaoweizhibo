@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>跟风直播 - MVP 流程交互原型演示</title>
+  <title>清风直播 - 高可用电视直播与订阅服务</title>
   <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.8/dist/hls.min.js"></script>
   <style>
     :root {
@@ -554,7 +554,7 @@
       opacity: 0.4;
     }
 
-    /* 小薇直播经典 OSD 台标信息 */
+    /* 清风直播经典 OSD 台标信息 */
     .tv-osd-top {
       position: absolute;
       top: 14px;
@@ -1023,7 +1023,7 @@
     <div class="brand">
       <div class="brand-logo">📺</div>
       <div>
-        <h1>跟风直播 <span class="badge-mvp">MVP 业务流程交互原型</span></h1>
+        <h1>清风直播 <span class="badge-mvp">纯净版</span></h1>
       </div>
     </div>
     <div class="nav-actions">
@@ -1258,10 +1258,10 @@
           <div class="delivery-box">
             <strong style="font-size:0.9rem; color:#fff;">🌐 方式一：固定在线订阅 URL</strong>
             <p style="font-size:0.78rem; color:var(--text-muted);">
-              在小薇直播【网络自定义】中填入固定订阅直链，后台每天自动更新，电视端永不失效：
+              在清风直播【网络自定义】中填入固定订阅直链，后台每天自动更新，电视端永不失效：
             </p>
             <div style="display:flex; flex-direction:column; gap:6px;">
-              <label style="font-size:0.75rem; color:#94a3b8;">📺 小薇直播专属直链 (/live.txt):</label>
+              <label style="font-size:0.75rem; color:#94a3b8;">📺 清风直播专属直链 (/live.txt):</label>
               <input type="text" class="sub-url-input" id="subUrlField" value="http://localhost:8088/live.txt" readonly>
             </div>
             <div style="display:flex; flex-direction:column; gap:6px;">
@@ -1270,7 +1270,7 @@
             </div>
             <div style="display:flex; gap:8px; margin-top:4px;">
               <button class="btn btn-primary" style="flex:1; justify-content:center;" onclick="copySubUrl()">
-                📋 复制小薇源地址
+                📋 复制清风源地址
               </button>
               <button class="btn btn-secondary" style="flex:1; justify-content:center;" onclick="copyM3uUrl()">
                 📋 复制 M3U 地址
@@ -1282,7 +1282,7 @@
           <div class="delivery-box">
             <strong style="font-size:0.9rem; color:#fff;">💾 方式二：离线 U 盘 / 局域网文件</strong>
             <p style="font-size:0.78rem; color:var(--text-muted);">
-              导出完全符合小薇直播 <code>#genre#</code> 分组规范或通用标准播放器的离线文件：
+              导出完全符合清风直播 <code>#genre#</code> 分组规范或通用标准播放器的离线文件：
             </p>
             <div style="display:flex; flex-direction:column; gap:8px; margin-top:auto;">
               <div style="display:flex; gap:8px;">
@@ -1290,7 +1290,7 @@
                   📋 复制纯文本
                 </button>
                 <button class="btn btn-success" style="flex:1; justify-content:center;" onclick="downloadPureTxt()">
-                  ⬇ 下载 live_xiaowei.txt
+                  ⬇ 下载 live_qingfeng.txt
                 </button>
               </div>
               <div style="display:flex; gap:8px;">
@@ -1311,7 +1311,7 @@
               直播源文件内容预览 (已按央视、卫视规范排序)：
             </label>
             <div style="display:flex; gap:6px;">
-              <button class="btn btn-secondary" style="padding:2px 8px; font-size:0.75rem;" onclick="showExportTab('txt')">小薇 TXT</button>
+              <button class="btn btn-secondary" style="padding:2px 8px; font-size:0.75rem;" onclick="showExportTab('txt')">清风 TXT</button>
               <button class="btn btn-secondary" style="padding:2px 8px; font-size:0.75rem;" onclick="showExportTab('m3u')">标准 M3U</button>
             </div>
           </div>
@@ -1330,7 +1330,7 @@
     <!-- 右侧：电视大屏与遥控器交互体验卡片 -->
     <section class="card-panel">
       <div class="card-header">
-        <h2>🖥️ 小薇直播电视端模拟体验</h2>
+        <h2>🖥️ 清风直播电视端模拟体验</h2>
         <span class="badge-mvp">遥控器联动</span>
       </div>
       <div class="card-body">
@@ -1397,7 +1397,7 @@
                 <div class="tv-epg-next" id="tvNextProgram">稍后播放：焦点访谈 (19:38)</div>
               </div>
               <div style="font-size:0.75rem; color:#94a3b8; font-family:monospace;">
-                跟风直播
+                清风直播
               </div>
             </div>
           </div>
@@ -1405,7 +1405,7 @@
           <!-- 仿真遥控器 -->
           <div class="remote-pad">
             <div class="remote-header">
-              <span>XiaoWei Remote</span>
+              <span>QingFeng Remote</span>
               <span style="color:#ef4444;">● 电源</span>
             </div>
 
@@ -1438,7 +1438,7 @@
   </main>
 
   <footer>
-    跟风直播 • MVP 原型系统 • 支持完整业务流程模拟、去噪测速与电视端无感订阅
+    清风直播 • 纯净高可用直播系统 • 支持完整业务流程模拟、去噪测速与电视端无感订阅
   </footer>
 
   <script>
@@ -2318,7 +2318,7 @@ CHC动作电影,http://38.75.136.137:98/gslb/dsdqbv/chcdz.m3u8?auth=test20251009
     function copySubUrl() {
       const url = document.getElementById('subUrlField').value;
       navigator.clipboard.writeText(url).then(() => {
-        alert("✅ 小薇直播订阅地址已成功复制！\n可在小薇直播网络自定义源直接粘贴使用。");
+        alert("✅ 清风直播订阅地址已成功复制！\n可在电视端网络自定义源直接粘贴使用。");
       });
     }
 
@@ -2330,13 +2330,13 @@ CHC动作电影,http://38.75.136.137:98/gslb/dsdqbv/chcdz.m3u8?auth=test20251009
     }
 
     function mockScanQr() {
-      alert("📱 [模拟扫码推送]:\n已模拟将订阅地址推送至局域网电视盒，电视端小薇直播已成功无感更新！");
+      alert("📱 [模拟扫码推送]:\n已模拟将订阅地址推送至局域网电视盒，电视端清风直播已成功无感更新！");
     }
 
     function copyTxtContent() {
       const txt = currentExportData.txt || document.getElementById('exportPreviewArea').value;
       navigator.clipboard.writeText(txt).then(() => {
-        alert("✅ 小薇直播专用文本格式已复制到剪切板！");
+        alert("✅ 清风直播专用文本格式已复制到剪切板！");
       });
     }
 
@@ -2352,7 +2352,7 @@ CHC动作电影,http://38.75.136.137:98/gslb/dsdqbv/chcdz.m3u8?auth=test20251009
       const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = 'live_xiaowei.txt';
+      a.download = 'live_qingfeng.txt';
       a.click();
     }
 

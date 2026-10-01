@@ -73,7 +73,7 @@ class TestLiveDemoServer(unittest.TestCase):
         with urllib.request.urlopen(req) as resp:
             self.assertEqual(resp.status, 200)
             content = resp.read().decode("utf-8")
-            self.assertIn("跟风直播", content)
+            self.assertIn("清风直播", content)
 
     def test_live_txt_endpoint(self):
         url = f"http://127.0.0.1:{TEST_PORT}/live.txt"
