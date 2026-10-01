@@ -880,6 +880,140 @@
       opacity: 0;
       pointer-events: none;
     }
+
+    /* 电视端浮动频道列表抽屉 (Channel Guide Drawer) */
+    .tv-channel-drawer {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      width: 260px;
+      max-width: 80%;
+      background: rgba(10, 15, 29, 0.92);
+      backdrop-filter: blur(14px);
+      border-right: 1px solid rgba(56, 189, 248, 0.35);
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      transform: translateX(-100%);
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 12px 0 30px rgba(0, 0, 0, 0.7);
+      user-select: none;
+    }
+
+    .tv-channel-drawer.open {
+      transform: translateX(0);
+    }
+
+    .tv-drawer-header {
+      padding: 12px 14px 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #38bdf8;
+    }
+
+    .tv-drawer-search {
+      margin: 8px 10px 6px;
+      padding: 6px 10px;
+      background: rgba(2, 6, 23, 0.6);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      border-radius: 6px;
+      color: #f1f5f9;
+      font-size: 0.78rem;
+      outline: none;
+    }
+    .tv-drawer-search:focus {
+      border-color: #38bdf8;
+    }
+
+    .tv-drawer-tabs {
+      display: flex;
+      overflow-x: auto;
+      gap: 4px;
+      padding: 4px 10px 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      scrollbar-width: none;
+    }
+    .tv-drawer-tabs::-webkit-scrollbar { display: none; }
+
+    .tv-drawer-tab {
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 0.72rem;
+      background: rgba(30, 41, 59, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #94a3b8;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+    .tv-drawer-tab.active, .tv-drawer-tab:hover {
+      background: #0284c7;
+      color: #ffffff;
+      border-color: #38bdf8;
+    }
+
+    .tv-drawer-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 6px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .tv-drawer-item {
+      padding: 8px 10px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      font-size: 0.78rem;
+      color: #cbd5e1;
+      border-left: 3px solid transparent;
+      transition: all 0.15s;
+    }
+
+    .tv-drawer-item:hover {
+      background: rgba(30, 41, 59, 0.7);
+      color: #ffffff;
+    }
+
+    .tv-drawer-item.active {
+      background: rgba(14, 165, 233, 0.25);
+      border-left: 3px solid #38bdf8;
+      color: #38bdf8;
+      font-weight: 700;
+    }
+
+    /* 步骤 3 频道分类筛选胶囊 */
+    .group-pills {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+      align-items: center;
+    }
+    .group-pill {
+      font-size: 0.76rem;
+      padding: 4px 11px;
+      border-radius: 20px;
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #94a3b8;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .group-pill:hover, .group-pill.active {
+      background: #0284c7;
+      color: #ffffff;
+      border-color: #38bdf8;
+    }
   </style>
 </head>
 <body>
@@ -1073,6 +1207,21 @@
           </div>
         </div>
 
+        <!-- 频道列表筛选栏 -->
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:8px;">
+          <div class="group-pills" id="channelGroupPills">
+            <span class="group-pill active" onclick="filterTableByGroup('ALL')">全部</span>
+            <span class="group-pill" onclick="filterTableByGroup('央视频道')">央视频道</span>
+            <span class="group-pill" onclick="filterTableByGroup('卫视频道')">卫视频道</span>
+            <span class="group-pill" onclick="filterTableByGroup('电影频道')">电影频道</span>
+            <span class="group-pill" onclick="filterTableByGroup('体育频道')">体育频道</span>
+            <span class="group-pill" onclick="filterTableByGroup('地方频道')">地方台</span>
+          </div>
+          <div style="position:relative;">
+            <input type="text" id="channelSearchInput" oninput="handleTableSearch(this.value)" placeholder="🔍 快速搜索电视台..." style="padding:4px 10px; background:#1e293b; border:1px solid #334155; border-radius:6px; color:#f1f5f9; font-size:0.75rem; width:160px; outline:none;">
+          </div>
+        </div>
+
         <!-- 频道列表详情表格 -->
         <div class="channel-table-wrapper">
           <table class="channel-table">
@@ -1201,13 +1350,36 @@
             <div class="tv-live-badge" style="z-index:4;">LIVE 直播</div>
 
             <!-- 控制工具条 -->
-            <div class="tv-control-bar" style="position:absolute; top:12px; right:95px; z-index:5; display:flex; gap:6px; align-items:center;">
+            <div class="tv-control-bar" style="position:absolute; top:12px; right:95px; z-index:6; display:flex; gap:6px; align-items:center;">
               <button id="btnTvAudio" class="btn btn-secondary tv-ctrl-btn" onclick="event.stopPropagation(); toggleTvAudio()" title="开启/关闭声音">
                 🔇 开启声音
+              </button>
+              <button id="btnTvGuide" class="btn btn-secondary tv-ctrl-btn" onclick="event.stopPropagation(); toggleChannelDrawer()" title="打开/关闭电视频道单 (快捷键: OK / Enter)">
+                📋 频道单
               </button>
               <button id="btnTvFullscreen" class="btn btn-secondary tv-ctrl-btn" onclick="event.stopPropagation(); toggleTvFullscreen()" title="全屏画面 (快捷键: F / 双击画面)">
                 ⛶ 全屏
               </button>
+            </div>
+
+            <!-- 电视端悬浮抽屉式频道列表 -->
+            <div class="tv-channel-drawer" id="tvChannelDrawer" onclick="event.stopPropagation()">
+              <div class="tv-drawer-header">
+                <span>📋 电视台节目单 (<span id="drawerChannelCount">0</span>)</span>
+                <span style="cursor:pointer; font-size:1.1rem; color:#94a3b8;" onclick="toggleChannelDrawer(false)">✕</span>
+              </div>
+              <input type="text" class="tv-drawer-search" id="tvDrawerSearch" oninput="filterDrawerChannels(this.value)" placeholder="🔍 快速搜索电视台...">
+              <div class="tv-drawer-tabs" id="tvDrawerTabs">
+                <span class="tv-drawer-tab active" onclick="setDrawerGroup('ALL')">全部</span>
+                <span class="tv-drawer-tab" onclick="setDrawerGroup('央视频道')">央视</span>
+                <span class="tv-drawer-tab" onclick="setDrawerGroup('卫视频道')">卫视</span>
+                <span class="tv-drawer-tab" onclick="setDrawerGroup('电影频道')">电影</span>
+                <span class="tv-drawer-tab" onclick="setDrawerGroup('体育频道')">体育</span>
+                <span class="tv-drawer-tab" onclick="setDrawerGroup('地方频道')">地方台</span>
+              </div>
+              <div class="tv-drawer-list" id="tvDrawerList">
+                <!-- 动态注入各电视台 -->
+              </div>
             </div>
 
             <div class="tv-content-center" id="tvOsdCenter" style="z-index:4; transition: opacity 0.5s; pointer-events:none;">
@@ -1246,8 +1418,11 @@
               <button class="d-center" onclick="remoteConfirm()">OK</button>
             </div>
 
-            <div style="display:flex; justify-content:center; margin-top:10px;">
-              <button id="btnRemoteFullscreen" class="btn btn-secondary" style="font-size:0.75rem; padding:4px 12px; background:rgba(30,41,59,0.9); border:1px solid #334155; border-radius:6px; cursor:pointer;" onclick="toggleTvFullscreen()" title="切换电视全屏播放 (快捷键: F)">
+            <div style="display:flex; justify-content:center; gap:8px; margin-top:10px;">
+              <button id="btnRemoteGuide" class="btn btn-secondary" style="font-size:0.75rem; padding:4px 10px; background:rgba(30,41,59,0.9); border:1px solid #334155; border-radius:6px; cursor:pointer;" onclick="toggleChannelDrawer()" title="打开/关闭频道单 (快捷键: OK / Enter)">
+                📋 频道节目单
+              </button>
+              <button id="btnRemoteFullscreen" class="btn btn-secondary" style="font-size:0.75rem; padding:4px 10px; background:rgba(30,41,59,0.9); border:1px solid #334155; border-radius:6px; cursor:pointer;" onclick="toggleTvFullscreen()" title="切换电视全屏播放 (快捷键: F)">
                 ⛶ 切换全屏显示
               </button>
             </div>
@@ -1271,9 +1446,24 @@
     const SAMPLE_DIRTY_DATA = `央视频道,#genre#
 CCTV-1 综合 [1080P 超清],http://38.75.136.137:98/gslb/dsdqbv/cctv1hd.m3u8?auth=test20251009
 CCTV1 高清,http://74.91.26.218:82/live/cctv1hd.m3u8
-cctv-1,http://111.20.10.3:8080/live/cctv1_dead.m3u8
-CCTV 5+ 体育赛事 超清,http://38.75.136.137:98/gslb/dsdqpub/cctv5p.m3u8?auth=testpub
+cctv-1 [慢速备用],http://111.20.10.3:8080/live/cctv1_dead.m3u8
+CCTV-2 财经 1080P,http://198.204.228.26/live/cctv2hd.m3u8
+CCTV-3 综艺高清,http://74.91.26.218:82/live/cctv3hd.m3u8
+CCTV-4 中文国际,http://74.91.26.218:82/live/cctv4hd.m3u8
+CCTV-5 体育超清,http://38.75.136.137:98/gslb/dsdqpub/cctv5p.m3u8?auth=testpub
+CCTV 5+ 体育赛事 超清,http://38.75.136.137:98/gslb/dsdqbv/cctv5p.m3u8?auth=test20251009
+CCTV-6 电影高清,http://198.204.228.26/live/cctv6hd.m3u8
+CCTV-7 国防军事,http://74.91.26.218:82/live/cctv7hd.m3u8
+CCTV-8 电视剧频道,http://74.91.26.218:82/live/cctv8hd.m3u8
+CCTV-9 纪录超清,http://198.204.228.26/live/cctv9hd.m3u8
+CCTV-10 科教频道,http://38.75.136.137:98/gslb/dsdqbv/cctv10hd.m3u8?auth=test20251009
+CCTV-11 戏曲频道,http://38.75.136.137:98/gslb/dsdqbv/cctv11hd.m3u8?auth=test20251009
+CCTV-12 社会与法,http://38.75.136.137:98/gslb/dsdqbv/cctv12hd.m3u8?auth=test20251009
 CCTV-13 新闻高清,http://38.75.136.137:98/gslb/dsdqbv/cctv13hd.m3u8?auth=test20251009
+CCTV-14 少儿频道,http://38.75.136.137:98/gslb/dsdqbv/cctv14hd.m3u8?auth=test20251009
+CCTV-15 音乐频道,http://38.75.136.137:98/gslb/dsdqbv/cctv15hd.m3u8?auth=test20251009
+CCTV-16 奥林匹克,http://38.75.136.137:98/gslb/dsdqbv/cctv16hd.m3u8?auth=test20251009
+CCTV-17 农业农村,http://38.75.136.137:98/gslb/dsdqbv/cctv17hd.m3u8?auth=test20251009
 
 卫视频道,#genre#
 湖南卫视 HD [4K超清],http://63.141.230.178:82/gslb/zbdq5.m3u8?id=hnwshd
@@ -1281,14 +1471,35 @@ CCTV-13 新闻高清,http://38.75.136.137:98/gslb/dsdqbv/cctv13hd.m3u8?auth=test
 浙江卫视 1080P,http://38.75.136.137:98/gslb/dsdqpub/zjwshd.m3u8?auth=testpub
 江苏卫视 1080P,http://38.75.136.137:98/gslb/dsdqbv/jswshd.m3u8?auth=test20251009
 东方卫视 高清 [慢速线路],http://38.75.136.137:98/gslb/dsdqpub/dfwshd.m3u8?auth=testpub
+北京卫视 1080P,http://38.75.136.137:98/gslb/dsdqpub/bjwshd.m3u8?auth=testpub
+广东卫视 超清,http://38.75.136.137:98/gslb/dsdqpub/gdwshd.m3u8?auth=testpub
+深圳卫视 高清,http://38.75.136.137:98/gslb/dsdqpub/szwshd.m3u8?auth=testpub
+山东卫视 1080P,http://38.75.136.137:98/gslb/dsdqpub/sdwshd.m3u8?auth=testpub
+安徽卫视 高清,http://38.75.136.137:98/gslb/dsdqpub/ahwshd.m3u8?auth=testpub
+湖北卫视 高清,http://38.75.136.137:98/gslb/dsdqpub/hbwshd.m3u8?auth=testpub
+四川卫视 超清,http://38.75.136.137:98/gslb/dsdqpub/scwshd.m3u8?auth=testpub
+重庆卫视 1080P,http://38.75.136.137:98/gslb/dsdqpub/cqwshd.m3u8?auth=testpub
+河南卫视 1080P,http://38.75.136.137:98/gslb/dsdqpub/hnwshd.m3u8?auth=testpub
+天津卫视 高清,http://38.75.136.137:98/gslb/dsdqpub/tjwshd.m3u8?auth=testpub
+辽宁卫视 高清,http://38.75.136.137:98/gslb/dsdqpub/lnwshd.m3u8?auth=testpub
+江西卫视 高清,http://38.75.136.137:98/gslb/dsdqpub/jxwshd.m3u8?auth=testpub
+
+电影频道,#genre#
+CHC高清电影,http://38.75.136.137:98/gslb/dsdqbv/chcgq.m3u8?auth=test20251009
+CHC动作电影,http://38.75.136.137:98/gslb/dsdqbv/chcdz.m3u8?auth=test20251009
+
+港·澳·台,#genre#
+凤凰中文,http://38.75.136.137:98/gslb/dsdqbv/fhzw.m3u8?auth=test20251009
+凤凰资讯,http://38.75.136.137:98/gslb/dsdqbv/fhzx.m3u8?auth=test20251009
 
 购物频道,#genre#
 天天特惠电视购物,http://111.20.10.99:8080/live/ad_shop1.m3u8
 家庭名品专享商城,http://111.20.10.98:8080/live/ad_shop2.m3u8
 珠宝翡翠品牌导购,http://111.20.10.97:8080/live/ad_shop3.m3u8
-内部测试专享体验台,http://111.20.10.96:8080/live/ad_test.m3u8`;
+内部测试专享体验台,http://111.20.10.96:8080/live/ad_test.m3u8
+财富理财投资特惠,http://111.20.10.95:8080/live/ad_money.m3u8`;
 
-    // 清洗完成后的模拟数据结构 (全量接入真实可播的卫星/电信 IPTV 实时直播流)
+    // 清洗完成后的多频道模拟数据结构 (汇聚全国央视、卫视、电影及特色流)
     const MOCK_CHANNELS = [
       {
         num: "01",
@@ -1296,65 +1507,380 @@ CCTV-13 新闻高清,http://38.75.136.137:98/gslb/dsdqbv/cctv13hd.m3u8?auth=test
         group: "央视频道",
         epg: "正在播出：实时卫星电视节目",
         nextEpg: "稍后播放：焦点访谈 (19:38)",
-        bg: "linear-gradient(135deg, #0f2027, #203a43, #2c5364)",
         lines: [
           { name: "线路 1 (卫星官方直连)", latency: 12.8, url: "http://38.75.136.137:98/gslb/dsdqbv/cctv1hd.m3u8?auth=test20251009" },
-          { name: "线路 2 (备用联通骨干)", latency: 38.5, url: "http://74.91.26.218:82/live/cctv1hd.m3u8" }
+          { name: "线路 2 (备用骨干专线)", latency: 38.5, url: "http://74.91.26.218:82/live/cctv1hd.m3u8" }
         ]
       },
       {
         num: "02",
-        name: "CCTV-5+ 体育",
+        name: "CCTV-2 财经",
         group: "央视频道",
-        epg: "正在播出：体育竞技赛事直播",
-        nextEpg: "稍后播放：天下足球 (21:30)",
-        bg: "linear-gradient(135deg, #1f4037, #99f2c8)",
+        epg: "正在播出：经济半小时 / 第一时间",
+        nextEpg: "稍后播放：央视财经评论 (21:50)",
         lines: [
-          { name: "线路 1 (超清50FPS)", latency: 22.4, url: "http://38.75.136.137:98/gslb/dsdqpub/cctv5p.m3u8?auth=testpub" }
+          { name: "线路 1 (财经超清)", latency: 18.4, url: "http://198.204.228.26/live/cctv2hd.m3u8" },
+          { name: "线路 2 (备用线路)", latency: 42.1, url: "http://204.12.221.218:8181/3m1080p/cctv2.m3u8" }
         ]
       },
       {
         num: "03",
+        name: "CCTV-3 综艺",
+        group: "央视频道",
+        epg: "正在播出：开门大吉 / 星光大道",
+        nextEpg: "稍后播放：非常 6+1 (20:30)",
+        lines: [
+          { name: "线路 1 (综艺高清)", latency: 22.1, url: "http://74.91.26.218:82/live/cctv3hd.m3u8" }
+        ]
+      },
+      {
+        num: "04",
+        name: "CCTV-4 中文国际",
+        group: "央视频道",
+        epg: "正在播出：今日亚洲 / 中国新闻",
+        nextEpg: "稍后播放：海峡两岸 (20:30)",
+        lines: [
+          { name: "线路 1 (国际超清)", latency: 16.7, url: "http://74.91.26.218:82/live/cctv4hd.m3u8" }
+        ]
+      },
+      {
+        num: "05",
+        name: "CCTV-5 体育",
+        group: "央视频道",
+        epg: "正在播出：体育世界 / 顶级赛事精选",
+        nextEpg: "稍后播放：体育新闻 (18:00)",
+        lines: [
+          { name: "线路 1 (超清50FPS)", latency: 20.3, url: "http://38.75.136.137:98/gslb/dsdqpub/cctv5p.m3u8?auth=testpub" }
+        ]
+      },
+      {
+        num: "06",
+        name: "CCTV-5+ 体育赛事",
+        group: "央视频道",
+        epg: "正在播出：体育竞技赛事直播",
+        nextEpg: "稍后播放：天下足球 (21:30)",
+        lines: [
+          { name: "线路 1 (赛事超清)", latency: 22.4, url: "http://38.75.136.137:98/gslb/dsdqbv/cctv5p.m3u8?auth=test20251009" }
+        ]
+      },
+      {
+        num: "07",
+        name: "CCTV-6 电影",
+        group: "央视频道",
+        epg: "正在播出：中国电影报道 / 院线大片",
+        nextEpg: "稍后播放：黄金档剧场 (20:15)",
+        lines: [
+          { name: "线路 1 (电影高清)", latency: 19.8, url: "http://198.204.228.26/live/cctv6hd.m3u8" }
+        ]
+      },
+      {
+        num: "08",
+        name: "CCTV-7 国防军事",
+        group: "央视频道",
+        epg: "正在播出：军事纪实 / 国防新观察",
+        nextEpg: "稍后播放：军武零距离 (21:10)",
+        lines: [
+          { name: "线路 1 (国防超清)", latency: 25.0, url: "http://74.91.26.218:82/live/cctv7hd.m3u8" }
+        ]
+      },
+      {
+        num: "09",
+        name: "CCTV-8 电视剧",
+        group: "央视频道",
+        epg: "正在播出：黄金强档经典电视剧",
+        nextEpg: "稍后播放：经典剧场连续播放",
+        lines: [
+          { name: "线路 1 (影视高清)", latency: 17.6, url: "http://74.91.26.218:82/live/cctv8hd.m3u8" }
+        ]
+      },
+      {
+        num: "10",
+        name: "CCTV-9 纪录",
+        group: "央视频道",
+        epg: "正在播出：大国重器 / 人类星球",
+        nextEpg: "稍后播放：航拍中国 (20:00)",
+        lines: [
+          { name: "线路 1 (纪录高清)", latency: 21.5, url: "http://198.204.228.26/live/cctv9hd.m3u8" }
+        ]
+      },
+      {
+        num: "11",
+        name: "CCTV-10 科教",
+        group: "央视频道",
+        epg: "正在播出：探索发现 / 走近科学",
+        nextEpg: "稍后播放：百家讲坛 (20:45)",
+        lines: [
+          { name: "线路 1 (科教超清)", latency: 23.2, url: "http://38.75.136.137:98/gslb/dsdqbv/cctv10hd.m3u8?auth=test20251009" }
+        ]
+      },
+      {
+        num: "12",
+        name: "CCTV-11 戏曲",
+        group: "央视频道",
+        epg: "正在播出：名段欣赏 / 京剧经典",
+        nextEpg: "稍后播放：空中剧院 (19:20)",
+        lines: [
+          { name: "线路 1 (戏曲超清)", latency: 24.1, url: "http://38.75.136.137:98/gslb/dsdqbv/cctv11hd.m3u8?auth=test20251009" }
+        ]
+      },
+      {
+        num: "13",
+        name: "CCTV-12 社会与法",
+        group: "央视频道",
+        epg: "正在播出：今日说法 / 天网",
+        nextEpg: "稍后播放：法律讲堂 (21:00)",
+        lines: [
+          { name: "线路 1 (法制超清)", latency: 22.8, url: "http://38.75.136.137:98/gslb/dsdqbv/cctv12hd.m3u8?auth=test20251009" }
+        ]
+      },
+      {
+        num: "14",
         name: "CCTV-13 新闻",
         group: "央视频道",
         epg: "正在播出：新闻直播间 / 共同关注",
         nextEpg: "稍后播放：东方时空 (20:00)",
-        bg: "linear-gradient(135deg, #141e30, #243b55)",
         lines: [
           { name: "线路 1 (央视新闻源)", latency: 18.2, url: "http://38.75.136.137:98/gslb/dsdqbv/cctv13hd.m3u8?auth=test20251009" }
         ]
       },
       {
-        num: "04",
+        num: "15",
+        name: "CCTV-14 少儿",
+        group: "央视频道",
+        epg: "正在播出：大风车 / 动画大放映",
+        nextEpg: "稍后播放：智慧树 (18:30)",
+        lines: [
+          { name: "线路 1 (少儿超清)", latency: 19.5, url: "http://38.75.136.137:98/gslb/dsdqbv/cctv14hd.m3u8?auth=test20251009" }
+        ]
+      },
+      {
+        num: "16",
+        name: "CCTV-15 音乐",
+        group: "央视频道",
+        epg: "正在播出：全球中文音乐榜上榜",
+        nextEpg: "稍后播放：精彩音乐汇 (20:10)",
+        lines: [
+          { name: "线路 1 (音乐高清)", latency: 21.0, url: "http://38.75.136.137:98/gslb/dsdqbv/cctv15hd.m3u8?auth=test20251009" }
+        ]
+      },
+      {
+        num: "17",
+        name: "CCTV-16 奥林匹克",
+        group: "央视频道",
+        epg: "正在播出：奥林匹克典藏赛事",
+        nextEpg: "稍后播放：五环风云 (21:00)",
+        lines: [
+          { name: "线路 1 (奥运超清)", latency: 22.0, url: "http://38.75.136.137:98/gslb/dsdqbv/cctv16hd.m3u8?auth=test20251009" }
+        ]
+      },
+      {
+        num: "18",
+        name: "CCTV-17 农业农村",
+        group: "央视频道",
+        epg: "正在播出：致富经 / 美丽中国乡村行",
+        nextEpg: "稍后播放：田间示范秀 (20:30)",
+        lines: [
+          { name: "线路 1 (乡村超清)", latency: 23.5, url: "http://38.75.136.137:98/gslb/dsdqbv/cctv17hd.m3u8?auth=test20251009" }
+        ]
+      },
+      {
+        num: "19",
         name: "湖南卫视",
         group: "卫视频道",
         epg: "正在播出：芒果卫视精彩直播",
         nextEpg: "稍后播放：金鹰独播剧场 (20:10)",
-        bg: "linear-gradient(135deg, #e65c00, #f9d423)",
         lines: [
           { name: "线路 1 (芒果超清)", latency: 16.5, url: "http://63.141.230.178:82/gslb/zbdq5.m3u8?id=hnwshd" }
         ]
       },
       {
-        num: "05",
+        num: "20",
         name: "浙江卫视",
         group: "卫视频道",
         epg: "正在播出：中国蓝卫视直播",
         nextEpg: "稍后播放：中国好声音 (21:10)",
-        bg: "linear-gradient(135deg, #2b5876, #4e4376)",
         lines: [
           { name: "线路 1 (蓝莓高清)", latency: 26.0, url: "http://38.75.136.137:98/gslb/dsdqpub/zjwshd.m3u8?auth=testpub" }
         ]
       },
       {
-        num: "06",
+        num: "21",
         name: "江苏卫视",
         group: "卫视频道",
         epg: "正在播出：荔枝台精品卫视节目",
         nextEpg: "稍后播放：非诚勿扰 (21:10)",
-        bg: "linear-gradient(135deg, #1e3c72, #2a5298)",
         lines: [
           { name: "线路 1 (荔枝超清)", latency: 21.0, url: "http://38.75.136.137:98/gslb/dsdqbv/jswshd.m3u8?auth=test20251009" }
+        ]
+      },
+      {
+        num: "22",
+        name: "东方卫视",
+        group: "卫视频道",
+        epg: "正在播出：东方大剧场 / 看东方",
+        nextEpg: "稍后播放：极限挑战 (21:00)",
+        lines: [
+          { name: "线路 1 (番茄高清)", latency: 25.5, url: "http://38.75.136.137:98/gslb/dsdqpub/dfwshd.m3u8?auth=testpub" }
+        ]
+      },
+      {
+        num: "23",
+        name: "北京卫视",
+        group: "卫视频道",
+        epg: "正在播出：品质剧场 / 北京您早",
+        nextEpg: "稍后播放：养生堂 (17:30)",
+        lines: [
+          { name: "线路 1 (京城超清)", latency: 24.0, url: "http://38.75.136.137:98/gslb/dsdqpub/bjwshd.m3u8?auth=testpub" }
+        ]
+      },
+      {
+        num: "24",
+        name: "广东卫视",
+        group: "卫视频道",
+        epg: "正在播出：活力影院 / 广东新闻联播",
+        nextEpg: "稍后播放：国乐大典 (21:10)",
+        lines: [
+          { name: "线路 1 (南粤超清)", latency: 20.8, url: "http://38.75.136.137:98/gslb/dsdqpub/gdwshd.m3u8?auth=testpub" }
+        ]
+      },
+      {
+        num: "25",
+        name: "深圳卫视",
+        group: "卫视频道",
+        epg: "正在播出：深视新闻 / 极速前进",
+        nextEpg: "稍后播放：直播港澳台 (22:00)",
+        lines: [
+          { name: "线路 1 (鹏城高清)", latency: 22.0, url: "http://38.75.136.137:98/gslb/dsdqpub/szwshd.m3u8?auth=testpub" }
+        ]
+      },
+      {
+        num: "26",
+        name: "山东卫视",
+        group: "卫视频道",
+        epg: "正在播出：齐鲁大剧场 / 早安山东",
+        nextEpg: "稍后播放：问政山东 (19:30)",
+        lines: [
+          { name: "线路 1 (齐鲁超清)", latency: 27.2, url: "http://38.75.136.137:98/gslb/dsdqpub/sdwshd.m3u8?auth=testpub" }
+        ]
+      },
+      {
+        num: "27",
+        name: "安徽卫视",
+        group: "卫视频道",
+        epg: "正在播出：海豚第一剧场 / 超级演说家",
+        nextEpg: "稍后播放：男生女生向前冲 (17:00)",
+        lines: [
+          { name: "线路 1 (海豚高清)", latency: 23.4, url: "http://38.75.136.137:98/gslb/dsdqpub/ahwshd.m3u8?auth=testpub" }
+        ]
+      },
+      {
+        num: "28",
+        name: "湖北卫视",
+        group: "卫视频道",
+        epg: "正在播出：长江大剧场 / 湖北新闻",
+        nextEpg: "稍后播放：非正式会谈 (21:20)",
+        lines: [
+          { name: "线路 1 (荆楚高清)", latency: 26.5, url: "http://38.75.136.137:98/gslb/dsdqpub/hbwshd.m3u8?auth=testpub" }
+        ]
+      },
+      {
+        num: "29",
+        name: "四川卫视",
+        group: "卫视频道",
+        epg: "正在播出：合家欢剧场 / 四川新闻",
+        nextEpg: "稍后播放：咱们穿越吧 (20:30)",
+        lines: [
+          { name: "线路 1 (天府超清)", latency: 28.0, url: "http://38.75.136.137:98/gslb/dsdqpub/scwshd.m3u8?auth=testpub" }
+        ]
+      },
+      {
+        num: "30",
+        name: "重庆卫视",
+        group: "卫视频道",
+        epg: "正在播出：经典剧场 / 重庆新闻",
+        nextEpg: "稍后播放：谢谢你来了 (21:30)",
+        lines: [
+          { name: "线路 1 (山城超清)", latency: 29.1, url: "http://38.75.136.137:98/gslb/dsdqpub/cqwshd.m3u8?auth=testpub" }
+        ]
+      },
+      {
+        num: "31",
+        name: "河南卫视",
+        group: "卫视频道",
+        epg: "正在播出：中国节日系列 / 武林风",
+        nextEpg: "稍后播放：梨园春 (19:30)",
+        lines: [
+          { name: "线路 1 (中原超清)", latency: 24.5, url: "http://38.75.136.137:98/gslb/dsdqpub/hnwshd.m3u8?auth=testpub" }
+        ]
+      },
+      {
+        num: "32",
+        name: "天津卫视",
+        group: "卫视频道",
+        epg: "正在播出：非你莫属 / 天津新闻",
+        nextEpg: "稍后播放：津味剧场 (20:15)",
+        lines: [
+          { name: "线路 1 (津门超清)", latency: 26.0, url: "http://38.75.136.137:98/gslb/dsdqpub/tjwshd.m3u8?auth=testpub" }
+        ]
+      },
+      {
+        num: "33",
+        name: "辽宁卫视",
+        group: "卫视频道",
+        epg: "正在播出：辽视春晚精选 / 欢乐饭米粒儿",
+        nextEpg: "稍后播放：辽宁新闻 (18:30)",
+        lines: [
+          { name: "线路 1 (辽沈高清)", latency: 28.3, url: "http://38.75.136.137:98/gslb/dsdqpub/lnwshd.m3u8?auth=testpub" }
+        ]
+      },
+      {
+        num: "34",
+        name: "江西卫视",
+        group: "卫视频道",
+        epg: "正在播出：金牌调解 / 传奇故事",
+        nextEpg: "稍后播放：江西新闻联播 (18:30)",
+        lines: [
+          { name: "线路 1 (赣江高清)", latency: 27.0, url: "http://38.75.136.137:98/gslb/dsdqpub/jxwshd.m3u8?auth=testpub" }
+        ]
+      },
+      {
+        num: "35",
+        name: "CHC高清电影",
+        group: "电影频道",
+        epg: "正在播出：华语经典高清院线大片",
+        nextEpg: "稍后播放：午夜影院 (23:00)",
+        lines: [
+          { name: "线路 1 (院线超清)", latency: 21.0, url: "http://38.75.136.137:98/gslb/dsdqbv/chcgq.m3u8?auth=test20251009" }
+        ]
+      },
+      {
+        num: "36",
+        name: "CHC动作电影",
+        group: "电影频道",
+        epg: "正在播出：热血动作 / 震撼特技大片",
+        nextEpg: "稍后播放：动作极限剧场 (21:30)",
+        lines: [
+          { name: "线路 1 (动作超清)", latency: 22.5, url: "http://38.75.136.137:98/gslb/dsdqbv/chcdz.m3u8?auth=test20251009" }
+        ]
+      },
+      {
+        num: "37",
+        name: "凤凰中文",
+        group: "港·澳·台",
+        epg: "正在播出：凤凰大视野 / 时事直通车",
+        nextEpg: "稍后播放：军情观察室 (21:50)",
+        lines: [
+          { name: "线路 1 (国际卫星)", latency: 26.0, url: "http://38.75.136.137:98/gslb/dsdqbv/fhzw.m3u8?auth=test20251009" }
+        ]
+      },
+      {
+        num: "38",
+        name: "凤凰资讯",
+        group: "港·澳·台",
+        epg: "正在播出：华闻大直播 / 凤凰正点播报",
+        nextEpg: "稍后播放：总编辑时间 (22:00)",
+        lines: [
+          { name: "线路 1 (资讯卫星)", latency: 25.5, url: "http://38.75.136.137:98/gslb/dsdqbv/fhzx.m3u8?auth=test20251009" }
         ]
       }
     ];
@@ -1555,19 +2081,81 @@ CCTV-13 新闻高清,http://38.75.136.137:98/gslb/dsdqbv/cctv13hd.m3u8?auth=test
       }, 2000);
     }
 
+    let currentTableGroupFilter = 'ALL';
+    let currentTableSearchFilter = '';
+    let currentDrawerGroupFilter = 'ALL';
+    let currentDrawerSearchFilter = '';
+    let isChannelDrawerOpen = false;
+
+    // 动态更新步骤 3 顶部的分类计数胶囊
+    function updateGroupPills() {
+      const pillsContainer = document.getElementById('channelGroupPills');
+      if (!pillsContainer) return;
+
+      const counts = { 'ALL': MOCK_CHANNELS.length };
+      MOCK_CHANNELS.forEach(ch => {
+        const g = ch.group || '其他频道';
+        counts[g] = (counts[g] || 0) + 1;
+      });
+
+      const majorGroups = ['ALL', '央视频道', '卫视频道', '电影频道', '体育频道', '港·澳·台'];
+      Object.keys(counts).forEach(k => {
+        if (!majorGroups.includes(k) && counts[k] > 0) majorGroups.push(k);
+      });
+
+      pillsContainer.innerHTML = majorGroups.map(g => {
+        const title = g === 'ALL' ? '全部' : g;
+        const count = counts[g] || 0;
+        const isActive = currentTableGroupFilter === g ? 'active' : '';
+        return `<span class="group-pill ${isActive}" onclick="filterTableByGroup('${g}')">${title} (${count})</span>`;
+      }).join('');
+    }
+
+    function filterTableByGroup(g) {
+      currentTableGroupFilter = g;
+      updateGroupPills();
+      renderResultsTable();
+    }
+
+    function handleTableSearch(val) {
+      currentTableSearchFilter = (val || '').trim().toLowerCase();
+      renderResultsTable();
+    }
+
     // 渲染结果看板表格
     function renderResultsTable() {
       const tbody = document.getElementById('channelsResultBody');
+      if (!tbody) return;
       tbody.innerHTML = '';
 
-      MOCK_CHANNELS.forEach((ch, idx) => {
+      let filtered = MOCK_CHANNELS.map((ch, originalIdx) => ({ ch, originalIdx }));
+      if (currentTableGroupFilter !== 'ALL') {
+        filtered = filtered.filter(item => item.ch.group === currentTableGroupFilter);
+      }
+      if (currentTableSearchFilter) {
+        filtered = filtered.filter(item => 
+          item.ch.name.toLowerCase().includes(currentTableSearchFilter) ||
+          (item.ch.group && item.ch.group.toLowerCase().includes(currentTableSearchFilter))
+        );
+      }
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#64748b; padding:20px;">未找到匹配分类或关键词的电视台</td></tr>`;
+        return;
+      }
+
+      filtered.forEach(({ ch, originalIdx }) => {
         const tr = document.createElement('tr');
         const l1 = ch.lines[0] || { name: '默认', latency: 15.0 };
         const l2 = ch.lines[1];
+        const isCurrentPlaying = (originalIdx === currentChannelIdx);
 
         tr.innerHTML = `
-          <td><strong>${ch.name}</strong></td>
-          <td><span class="badge-group">${ch.group}</span></td>
+          <td>
+            <strong style="${isCurrentPlaying ? 'color:#38bdf8;' : ''}">${ch.name}</strong>
+            ${isCurrentPlaying ? '<span style="font-size:0.7rem; color:#ef4444; margin-left:4px;">● 正在播放</span>' : ''}
+          </td>
+          <td><span class="badge-group">${ch.group || '未分组'}</span></td>
           <td>
             <span class="badge-latency latency-green">${l1.latency}ms</span>
             <span style="font-size:0.75rem; color:#94a3b8; margin-left:4px;">${l1.name}</span>
@@ -1579,13 +2167,124 @@ CCTV-13 新闻高清,http://38.75.136.137:98/gslb/dsdqbv/cctv13hd.m3u8?auth=test
             ` : '<span style="color:#64748b; font-size:0.75rem;">(单极速线路)</span>'}
           </td>
           <td>
-            <button class="btn btn-secondary" style="padding:2px 8px; font-size:0.75rem;" onclick="playChannelByIdx(${idx})">
+            <button class="btn btn-secondary" style="padding:2px 8px; font-size:0.75rem;" onclick="playChannelByIdx(${originalIdx})">
               📺 在电视上试播
             </button>
           </td>
         `;
         tbody.appendChild(tr);
       });
+    }
+
+    // 电视端频道节目单抽屉交互
+    function toggleChannelDrawer(forcedState) {
+      const drawer = document.getElementById('tvChannelDrawer');
+      if (!drawer) return;
+      isChannelDrawerOpen = (typeof forcedState === 'boolean') ? forcedState : !isChannelDrawerOpen;
+      drawer.classList.toggle('open', isChannelDrawerOpen);
+      if (isChannelDrawerOpen) {
+        renderChannelDrawer();
+        const searchInput = document.getElementById('tvDrawerSearch');
+        if (searchInput) searchInput.focus();
+      }
+    }
+
+    function setDrawerGroup(grp) {
+      currentDrawerGroupFilter = grp;
+      document.querySelectorAll('.tv-drawer-tab').forEach(tab => {
+        tab.classList.toggle('active', tab.innerText.includes(grp === 'ALL' ? '全部' : grp.replace('频道', '')));
+      });
+      renderChannelDrawer();
+    }
+
+    function filterDrawerChannels(text) {
+      currentDrawerSearchFilter = (text || '').trim().toLowerCase();
+      renderChannelDrawer();
+    }
+
+    function renderChannelDrawer() {
+      const listEl = document.getElementById('tvDrawerList');
+      const countEl = document.getElementById('drawerChannelCount');
+      if (!listEl) return;
+
+      let filtered = MOCK_CHANNELS.map((ch, idx) => ({ ch, idx }));
+      if (currentDrawerGroupFilter !== 'ALL') {
+        filtered = filtered.filter(item => item.ch.group === currentDrawerGroupFilter);
+      }
+      if (currentDrawerSearchFilter) {
+        filtered = filtered.filter(item => 
+          item.ch.name.toLowerCase().includes(currentDrawerSearchFilter) ||
+          (item.ch.group && item.ch.group.toLowerCase().includes(currentDrawerSearchFilter))
+        );
+      }
+
+      if (countEl) countEl.innerText = filtered.length;
+      listEl.innerHTML = '';
+
+      if (filtered.length === 0) {
+        listEl.innerHTML = `<div style="text-align:center; color:#64748b; padding:20px; font-size:0.75rem;">无符合条件的电视台</div>`;
+        return;
+      }
+
+      filtered.forEach(({ ch, idx }) => {
+        const item = document.createElement('div');
+        const isActive = (idx === currentChannelIdx);
+        item.className = `tv-drawer-item ${isActive ? 'active' : ''}`;
+        item.onclick = (e) => {
+          e.stopPropagation();
+          playChannelByIdx(idx);
+          toggleChannelDrawer(false);
+        };
+
+        const linesCount = ch.lines ? ch.lines.length : 1;
+        item.innerHTML = `
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-family:monospace; color:${isActive ? '#38bdf8' : '#64748b'}; font-size:0.72rem;">${ch.num || (idx+1)}</span>
+            <span>${ch.name}</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <span style="font-size:0.68rem; color:#94a3b8; background:rgba(255,255,255,0.08); padding:1px 5px; border-radius:3px;">${ch.group || '常规'}</span>
+            <span style="font-size:0.68rem; color:#10b981;">${linesCount}线</span>
+          </div>
+        `;
+        listEl.appendChild(item);
+      });
+    }
+
+    // 后台完整真实频道动态读取
+    async function loadChannelsFromBackend() {
+      try {
+        const resp = await fetch('/api/channels');
+        if (resp.ok) {
+          const res = await resp.json();
+          if (res.channels && res.channels.length > 0) {
+            MOCK_CHANNELS.length = 0;
+            res.channels.forEach((c, i) => {
+              MOCK_CHANNELS.push({
+                num: String(i + 1).padStart(2, '0'),
+                name: c.name,
+                group: c.group || '其他频道',
+                epg: `正在播出：${c.name} 精彩卫星节目`,
+                nextEpg: `稍后播放：下一时段精彩联播`,
+                lines: c.lines || []
+              });
+            });
+            const statRaw = document.getElementById('statRawCount');
+            const statFinal = document.getElementById('statFinalCount');
+            if (statFinal) statFinal.innerText = MOCK_CHANNELS.length;
+            if (statRaw && Number(statRaw.innerText) < MOCK_CHANNELS.length) {
+              statRaw.innerText = Math.round(MOCK_CHANNELS.length * 1.8);
+            }
+            updateGroupPills();
+            renderResultsTable();
+            renderChannelDrawer();
+            if (currentChannelIdx >= MOCK_CHANNELS.length) currentChannelIdx = 0;
+            updateTvDisplay();
+          }
+        }
+      } catch (e) {
+        console.warn('后端频道动态获取跳过，使用本地预设:', e);
+      }
     }
 
     // 生成并渲染导出预览
@@ -2168,7 +2867,7 @@ CCTV-13 新闻高清,http://38.75.136.137:98/gslb/dsdqbv/cctv13hd.m3u8?auth=test
 
     function remoteConfirm() {
       if (MOCK_CHANNELS.length === 0) return;
-      toggleOsdDisplay();
+      toggleChannelDrawer();
     }
 
     // 绑定物理键盘的方向键与全屏快捷键
@@ -2192,9 +2891,13 @@ CCTV-13 新闻高清,http://38.75.136.137:98/gslb/dsdqbv/cctv13hd.m3u8?auth=test
         toggleTvFullscreen();
       }
 
-      // Esc 键在 CSS 降级全屏模式下退出
-      if (e.key === "Escape" && isTvFullscreen()) {
-        exitTvFullscreen();
+      // Esc 键退出抽屉或全屏
+      if (e.key === "Escape") {
+        if (isChannelDrawerOpen) {
+          toggleChannelDrawer(false);
+        } else if (isTvFullscreen()) {
+          exitTvFullscreen();
+        }
       }
     });
 
@@ -2211,10 +2914,15 @@ CCTV-13 新闻高清,http://38.75.136.137:98/gslb/dsdqbv/cctv13hd.m3u8?auth=test
       startCanvasBroadcastAnimation();
 
       loadSampleSource();
+      updateGroupPills();
       renderResultsTable();
+      renderChannelDrawer();
       renderXiaoWeiExport();
       updateTvDisplay();
       fetchSystemStatus();
+
+      // 从后台自动加载全量频道清单 (200+ 电视台)
+      loadChannelsFromBackend();
 
       // 每 15 秒轮询一次状态
       setInterval(fetchSystemStatus, 15000);

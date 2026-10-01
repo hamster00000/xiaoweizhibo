@@ -14,6 +14,21 @@
       "name": "fanmingming_ipv6",
       "url": "https://live.fanmingming.com/tv/m3u/ipv6.m3u",
       "format": "m3u"
+    },
+    {
+      "name": "zbds_ipv6",
+      "url": "https://live.zbds.top/tv/iptv6.m3u",
+      "format": "m3u"
+    },
+    {
+      "name": "Ftindy_IPTV",
+      "url": "https://raw.githubusercontent.com/Ftindy/IPTV-URL/main/IPTV.m3u",
+      "format": "m3u"
+    },
+    {
+      "name": "ssili126_itv",
+      "url": "https://raw.githubusercontent.com/ssili126/tv/main/itvlist.m3u",
+      "format": "m3u"
     }
   ],
   "checker": {
@@ -37,6 +52,43 @@
       "name": "卫视频道",
       "patterns": [
         ".*卫视$"
+      ]
+    },
+    {
+      "name": "电影频道",
+      "patterns": [
+        ".*电影.*",
+        "^CHC.*",
+        ".*影院.*",
+        ".*剧场.*"
+      ]
+    },
+    {
+      "name": "体育频道",
+      "patterns": [
+        ".*体育.*",
+        ".*赛事.*",
+        ".*足球.*",
+        ".*五星体育.*"
+      ]
+    },
+    {
+      "name": "动画少儿",
+      "patterns": [
+        ".*少儿.*",
+        ".*卡通.*",
+        ".*动画.*",
+        ".*炫动.*"
+      ]
+    },
+    {
+      "name": "港·澳·台",
+      "patterns": [
+        ".*凤凰.*",
+        "^TVB.*",
+        ".*翡翠.*",
+        ".*澳亚.*",
+        ".*莲花.*"
       ]
     },
     {

@@ -143,8 +143,9 @@ start_server() {
 
     if [ "$mode" = "daemon" ]; then
         echo -e "${GREEN}[+] 正在以守护模式后台启动服务...${NC}"
-        nohup python3 server.py -p "$PORT" -c "$CONFIG_FILE" > "$LOG_FILE" 2>&1 &
+        PYTHONUNBUFFERED=1 nohup python3 -u server.py -p "$PORT" -c "$CONFIG_FILE" > "$LOG_FILE" 2>&1 &
         local new_pid=$!
+        disown "$new_pid" 2>/dev/null || true
         echo "$new_pid" > "$PID_FILE"
         sleep 0.8
         if kill -0 "$new_pid" 2>/dev/null; then

@@ -94,6 +94,16 @@ class TestLiveDemoServer(unittest.TestCase):
             self.assertTrue(content.startswith("#EXTM3U"))
             self.assertIn("CCTV-1", content)
 
+    def test_channels_api(self):
+        url = f"http://127.0.0.1:{TEST_PORT}/api/channels"
+        req = urllib.request.Request(url)
+        with urllib.request.urlopen(req) as resp:
+            self.assertEqual(resp.status, 200)
+            data = json.loads(resp.read().decode("utf-8"))
+            self.assertEqual(data["code"], 0)
+            self.assertGreaterEqual(data["total"], 1)
+            self.assertTrue(any(c["name"] == "CCTV-1" for c in data["channels"]))
+
     def test_refresh_api(self):
         url = f"http://127.0.0.1:{TEST_PORT}/api/refresh"
         req = urllib.request.Request(url, data=b"{}", headers={"Content-Type": "application/json"})
